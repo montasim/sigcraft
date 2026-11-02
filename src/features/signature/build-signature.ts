@@ -159,8 +159,32 @@ function createKit(s: SignatureState, target: BuildTarget) {
     const ta = `text-align:${align};`
     const dark = style === "dark"
     const ink = dark ? "#ffffff" : text
+    // With a job title, the company joins it on one line ("Co-founder at
+    // Qubrel"), so it's clear where the role is. Without one, the department
+    // and company share a line on their own.
+    const role = [f.title, f.dept].filter(Boolean).map(esc).join(", ")
+    // The role line's colour differs by style; a linked company name keeps
+    // it rather than turning into a blue link.
+    const roleColor =
+      style === "elegant" || style === "inline"
+        ? MUTED
+        : style === "headline" || style === "accent"
+          ? theme
+          : ink
+    const companyUrl = fullUrl(f.companyUrl)
+    const company = (color: string) =>
+      companyUrl
+        ? `<a href="${esc(companyUrl)}" target="_blank" style="color:${color};font-weight:bold;text-decoration:none;">${esc(f.company)}</a>`
+        : `<span style="font-weight:bold;">${esc(f.company)}</span>`
+    const atCompany = f.company
+      ? `<span style="font-weight:normal;">&nbsp;at&nbsp;</span>${company(roleColor)}`
+      : ""
     const sep = `<span style="color:${dark ? "#ffffff" : theme};">&nbsp;|&nbsp;</span>`
-    const org = [f.dept, f.company].filter(Boolean).map(esc).join(sep)
+    const org = f.title
+      ? ""
+      : [f.dept && esc(f.dept), f.company && company(ink)]
+          .filter(Boolean)
+          .join(sep)
     // A banner can't hold the muted slogan; that layout places it itself.
     const underName =
       s.sloganPosition === "name" && !dark
@@ -172,7 +196,9 @@ function createKit(s: SignatureState, target: BuildTarget) {
 
     if (style === "inline") {
       const dot = `<span style="color:${theme};">&nbsp;&middot;&nbsp;</span>`
-      const rest = [f.title, f.dept, f.company].filter(Boolean).map(esc)
+      const rest = f.title
+        ? [role + atCompany]
+        : [f.dept && esc(f.dept), f.company && company(MUTED)].filter(Boolean)
       return (
         `<div style="${T(base + 2, text, ta)}"><span style="font-weight:bold;">${esc(name)}</span>${rest.length ? `<span style="color:${MUTED};">${dot}${rest.join(dot)}</span>` : ""}</div>` +
         pronouns +
@@ -221,8 +247,8 @@ function createKit(s: SignatureState, target: BuildTarget) {
     const title = !f.title
       ? ""
       : style === "pill"
-        ? `<div style="${T(base, ink, `padding:4px 0 2px;${ta}`)}">${titlePill()}</div>`
-        : `<div style="${titleCss}">${esc(f.title)}</div>`
+        ? `<div style="${T(base, ink, `padding:4px 0 2px;${ta}`)}">${titlePill(role)}${atCompany}</div>`
+        : `<div style="${titleCss}">${role}${atCompany}</div>`
     return (
       nameHtml +
       title +
@@ -386,9 +412,9 @@ function createKit(s: SignatureState, target: BuildTarget) {
   }
 
   // The job title as a small filled label.
-  const titlePill = () =>
-    f.title
-      ? `<span style="${T(base - 2, "#ffffff", `font-weight:bold;background-color:${theme};border-radius:10px;padding:2px 9px;white-space:nowrap;`)}">${esc(f.title)}</span>`
+  const titlePill = (html: string) =>
+    html
+      ? `<span style="${T(base - 2, "#ffffff", `font-weight:bold;background-color:${theme};border-radius:10px;padding:2px 9px;white-space:nowrap;`)}">${html}</span>`
       : ""
 
   // Contacts on one line, each with its icon, for wide, short layouts.
@@ -1009,8 +1035,11 @@ export function buildPlainText(state: SignatureState) {
   const slogan = f.slogan.trim().slice(0, SLOGAN_MAX_LENGTH)
   const identity = [
     [f.first, f.last].filter(Boolean).join(" "),
-    f.title,
-    [f.dept, f.company].filter(Boolean).join(" | "),
+    // Same wording as the HTML: "Co-founder at Qubrel".
+    f.title
+      ? [f.title, f.dept].filter(Boolean).join(", ") +
+        (f.company ? ` at ${f.company}` : "")
+      : [f.dept, f.company].filter(Boolean).join(" | "),
     f.pronouns,
     state.sloganPosition === "name" ? slogan : "",
   ]

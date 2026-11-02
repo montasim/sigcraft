@@ -95,6 +95,27 @@ describe("buildSignature", () => {
     expect(html).toContain("&lt;img src=x onerror=&quot;x&quot;&gt;")
   })
 
+  it("shows the company on the job title's line in every template", () => {
+    for (const template of TEMPLATE_IDS) {
+      const html = buildSignature({ ...fullState, template }, "copy")
+      expect(html).toMatch(
+        // In the Card template the title is a pill, closed before "at".
+        /Senior Software Engineer, Engineering(<\/span>)?<span[^>]*>&nbsp;at&nbsp;<\/span><span[^>]*>Example Co<\/span>/
+      )
+    }
+  })
+
+  it("links the company name to the company website", () => {
+    const html = buildSignature(
+      {
+        ...fullState,
+        fields: { ...fullState.fields, companyUrl: "example.co" },
+      },
+      "copy"
+    )
+    expect(html).toMatch(/<a href="https:\/\/example\.co"[^>]*>Example Co<\/a>/)
+  })
+
   it("uses a custom icon URL instead of the drawn icon", () => {
     const html = buildSignature(
       {
@@ -164,6 +185,18 @@ describe("buildPlainText", () => {
     expect(text.split("\n")[0]).toBe("Mohammad Montasim Al Mamun Shuvo")
     expect(text).toContain("montasimmamun@gmail.com")
     expect(text).toContain("LinkedIn: linkedin.com/in/montasim")
+  })
+
+  it("joins the job title and company on one line", () => {
+    expect(buildPlainText(fullState).split("\n")[1]).toBe(
+      "Senior Software Engineer, Engineering at Example Co"
+    )
+    expect(
+      buildPlainText({
+        ...fullState,
+        fields: { ...fullState.fields, title: "" },
+      }).split("\n")[1]
+    ).toBe("Engineering | Example Co")
   })
 
   it("puts a footer slogan last, after a blank line", () => {

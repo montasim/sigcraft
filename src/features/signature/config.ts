@@ -141,6 +141,8 @@ export type SignatureFields = {
   title: string
   dept: string
   company: string
+  /** Company website; the company name links to it. */
+  companyUrl: string
   pronouns: string
   office: string
   mobile: string
@@ -181,6 +183,7 @@ export const DEFAULT_STATE: SignatureState = {
     title: "Senior Software Engineer",
     dept: "",
     company: "",
+    companyUrl: "",
     pronouns: "",
     office: "",
     mobile: "+8801722815469",

@@ -10,7 +10,7 @@ It's for anyone who wants a clean signature without hand-writing email HTML, esp
 
 **Signature generator** (`/`), in four steps with a live preview in a mail window:
 
-- **Details:** name, job title, department, company, pronouns, a slogan of up to 120 characters, office and mobile phone, website, email, address, and seven social profiles (LinkedIn, GitHub, X, Facebook, Instagram, YouTube, WhatsApp).
+- **Details:** name, job title, department, company and its website (shown as "Co-founder at Company", with the company name linked), pronouns, a slogan of up to 120 characters, office and mobile phone, website, email, address, and seven social profiles (LinkedIn, GitHub, X, Facebook, Instagram, YouTube, WhatsApp).
 - **Images:** show or hide a profile photo, set its public URL, shape (circle, rounded, square) and size.
 - **Templates:** 26 named layouts, from photo-left and centred to banner, card, minimal, monogram and business-card styles, arranging photo, name, contacts, social icons and an optional button.
 - **Styles:** any theme colour (nine presets or a custom hex), text and link colours, eight email-safe fonts, three font sizes, icon styles (contact: soft circle, solid circle, outline; social: the same three plus brand colours), your own icon images, the slogan's position (a footer line below the signature, or under your name) and style (italic, plain or accent), and an optional call-to-action button.
