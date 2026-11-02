@@ -1,0 +1,37 @@
+[build]
+  command = "pnpm build"
+  publish = "dist/client"
+
+[build.environment]
+  NODE_VERSION = "22.23.2"
+  PNPM_VERSION = "11.7.0"
+
+[dev]
+  command = "pnpm dev"
+  targetPort = 3000
+
+# Security headers for static files. Server-rendered pages and /api routes get
+# the same set from the request middleware in src/start.ts.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+
+# Fingerprinted build assets never change, so browsers can keep them.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Gmail and other mail apps load the signature photo from here, so let it be
+# cached and fetched from any origin. Icons come from /api/icon, which sets
+# its own long-lived cache headers.
+[[headers]]
+  for = "/images/signature/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+    Access-Control-Allow-Origin = "*"
