@@ -19,9 +19,9 @@
     "shadcn-ui"
   ],
   "scripts": {
-    "dev": "vite dev --port 3000",
+    "dev": "infisical run --env=dev --expand=false -- vite dev --port 3000",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "infisical run --env=dev --expand=false -- vite preview",
     "test": "vitest run",
     "lint": "eslint",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\" \"*.{ts,js,json,md}\"",

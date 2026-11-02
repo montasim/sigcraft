@@ -11,7 +11,7 @@ pnpm install
 pnpm dev          # http://localhost:3000
 ```
 
-No environment variables are needed for local development. See [`.env.example`](.env.example) for the one optional variable.
+`pnpm dev` loads variables from Infisical, so install the [Infisical CLI](https://infisical.com/docs/cli/overview) and run `infisical login` first. If you don't have access to the project, run `pnpm exec vite dev --port 3000`; the app falls back to its defaults. [`.env.example`](.env.example) lists the one optional variable.
 
 ## Before you open a pull request
 

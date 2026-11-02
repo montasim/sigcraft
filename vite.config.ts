@@ -6,6 +6,8 @@ import tailwindcss from "@tailwindcss/vite"
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
+  // Variables come from Infisical (pnpm dev) or Netlify (builds), never .env files.
+  envDir: false,
   plugins: [
     tailwindcss(),
     tanstackStart(),

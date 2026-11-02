@@ -31,7 +31,7 @@ pnpm dev
 
 Open <http://localhost:3000>. You should see the signature generator with a sample signature in the preview; the email templates are at <http://localhost:3000/templates>.
 
-No environment variables are needed to run it locally.
+`pnpm dev` loads its variables from Infisical, so you also need the [Infisical CLI](https://infisical.com/docs/cli/overview), signed in with `infisical login` and with access to the linked project (see [Configuration](#configuration)). Without access, run `pnpm exec vite dev --port 3000` instead; the app falls back to its defaults.
 
 ## Use your signature in Gmail
 
@@ -51,7 +51,11 @@ Gmail loads the photo and icons from the web each time an email is shown, so the
 | --------------- | -------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VITE_SITE_URL` | No       | `https://sigcraft.netlify.app` | Public address that copied signatures load their photo and icons from, and the base for canonical and social-preview URLs. Read at build time. |
 
-To override it locally, copy [`.env.example`](.env.example) to `.env` and edit the value. On Netlify, set it under **Site configuration → Environment variables**, then redeploy.
+Variables live in the Infisical project linked by [`.infisical.json`](.infisical.json): the `dev` environment for local work and `prod` for the deployed site, both at path `/`. [`.env.example`](.env.example) lists names and example values only; don't copy it to a local secrets file, because Vite's `.env` loading is turned off.
+
+- **Locally,** `pnpm dev` and `pnpm preview` fetch the `dev` variables with `infisical run` and pass them to Vite. Restart the command after changing a value.
+- **On Netlify,** the build reads the site's environment variables. Keep them in step with Infisical's `prod` environment, either with an [Infisical Netlify secret sync](https://infisical.com/docs/integrations/secret-syncs/netlify) or by copying the values under **Site configuration → Environment variables**. `VITE_SITE_URL` is read at build time, so redeploy after changing it.
+- `pnpm build`, the tests and the static checks don't need Infisical; without the variable, the default address is used.
 
 ## How it works
 
