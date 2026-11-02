@@ -1,7 +1,7 @@
 {
   "name": "sigcraft",
   "version": "0.1.0",
-  "description": "Build a Gmail-ready email signature from 26 templates in any colour, and copy professional email templates.",
+  "description": "Build a Gmail-ready email signature from 37 templates in any colour, and copy professional email templates.",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.7.0",

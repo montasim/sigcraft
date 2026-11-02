@@ -1,6 +1,6 @@
 # Sigcraft
 
-Sigcraft builds a professional, Gmail-ready email signature and gives you ready-to-send email templates. Fill in your details, pick one of 26 layouts and any colour, then copy the signature and paste it into Gmail's settings. The preview shows exactly what Gmail will get.
+Sigcraft builds a professional, Gmail-ready email signature and gives you ready-to-send email templates. Fill in your details, pick one of 37 layouts and any colour, then copy the signature and paste it into Gmail's settings. The preview shows exactly what Gmail will get.
 
 It's for anyone who wants a clean signature without hand-writing email HTML, especially people sending job applications, recruiter replies and client emails.
 
@@ -11,8 +11,8 @@ It's for anyone who wants a clean signature without hand-writing email HTML, esp
 **Signature generator** (`/`), in four steps with a live preview in a mail window:
 
 - **Details:** name, job title, department, company and its website (shown as "Co-founder at Company", with the company name linked), pronouns, a slogan of up to 120 characters, office and mobile phone, website, email, address, and seven social profiles (LinkedIn, GitHub, X, Facebook, Instagram, YouTube, WhatsApp).
-- **Images:** show or hide a profile photo, set its public URL, shape (circle, rounded, square) and size.
-- **Templates:** 26 named layouts, from photo-left and centred to banner, card, minimal, monogram and business-card styles, arranging photo, name, contacts, social icons and an optional button.
+- **Images:** show or hide a profile photo, add a border around it in your theme colour (on by default, thin, regular or bold), set its public URL, shape (circle, rounded, square) and size.
+- **Templates:** 37 named layouts, listed A to Z and filterable by style (clean, minimal, classic, bold, unique): from photo-left and plain text to banner, letterpress, postcard and compact icon-row designs, arranging photo, name, contacts, social icons and an optional button.
 - **Styles:** any theme colour (nine presets or a custom hex), text and link colours, eight email-safe fonts, three font sizes, icon styles (contact: soft circle, solid circle, outline; social: the same three plus brand colours), your own icon images, the slogan's position (a footer line below the signature, or under your name) and style (italic, plain or accent), and an optional call-to-action button.
 - **Create signature:** copy it as rich HTML (for pasting into Gmail), raw HTML or plain text, with the Gmail setup steps and a character count against Gmail's 10,000-character limit.
 
