@@ -66,10 +66,13 @@ export const isContactIcon = (key: IconKey): key is ContactIconKey =>
 export const isHexColor = (v: string) => /^#[0-9a-f]{6}$/i.test(v)
 
 // Bump when the drawing changes, so mail apps and CDNs fetch fresh images.
-export const ICON_VERSION = "v1"
+// Every version stays servable for emails already sent.
+// v2: outline icons sit on a white plate so they stay visible in dark mode.
+export const ICON_VERSIONS = ["v1", "v2"] as const
+export const ICON_VERSION = "v2"
 
 /**
- * Path of a rendered icon, e.g. /api/icon/v1/soft/ff4800/phone.png.
+ * Path of a rendered icon, e.g. /api/icon/v2/soft/ff4800/phone.png.
  * Brand icons ignore the theme colour, so they share one URL per network.
  */
 export function iconPath(style: IconStyle, color: string, key: IconKey) {

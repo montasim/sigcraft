@@ -209,14 +209,27 @@ function encodePng(rgba: Buffer, size: number) {
   ])
 }
 
-/** Renders one icon. `color` is a #rrggbb theme colour (ignored for brand). */
-export function renderIcon(key: IconKey, style: IconStyle, color: string) {
+/**
+ * Renders one icon. `color` is a #rrggbb theme colour (ignored for brand).
+ *
+ * `plate` puts outline icons on a white rounded square. Dark mode in mail
+ * apps recolours text but never images, so a bare dark outline vanishes on a
+ * dark background; on a white email the plate is invisible. Version 1 icons,
+ * already in sent emails, are drawn without it.
+ */
+export function renderIcon(
+  key: IconKey,
+  style: IconStyle,
+  color: string,
+  { plate = true }: { plate?: boolean } = {}
+) {
   const contact = isContactIcon(key)
   const size = contact ? 72 : 96
   const theme = rgb(
     style === "brand" ? BRAND_COLORS[key as SocialIconKey] : color
   )
   const white: [number, number, number] = [255, 255, 255]
+  const plated = plate && style === "outline"
 
   // What fills the circle (null = no circle) and what colour the glyph is.
   const disc =
@@ -277,7 +290,19 @@ export function renderIcon(key: IconKey, style: IconStyle, color: string) {
         d2 = Math.min(d2, segDist2(fx, fy, s))
       const inkCov = coverage(hw - Math.sqrt(d2))
       const o = (yy * size + xx) * 4
-      if (disc) {
+      if (plated) {
+        // Signed distance to a rounded square filling the whole image.
+        const r = size * 0.22
+        const qx = Math.abs(fx - R) - (R - r)
+        const qy = Math.abs(fy - R) - (R - r)
+        const out =
+          Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) +
+          Math.min(Math.max(qx, qy), 0) -
+          r
+        for (let c = 0; c < 3; c++)
+          px[o + c] = Math.round(255 + (ink[c] - 255) * inkCov)
+        px[o + 3] = Math.round(coverage(-out) * 255)
+      } else if (disc) {
         const discCov = coverage(R - Math.hypot(fx - R, fy - R))
         for (let c = 0; c < 3; c++)
           px[o + c] = Math.round(disc[c] + (ink[c] - disc[c]) * inkCov)

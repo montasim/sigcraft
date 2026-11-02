@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TemplatesRouteImport } from './routes/templates'
-import { Route as ApiIconV1StyleColorFileRouteImport } from './routes/api/icon/v1/$style/$color/$file'
+import { Route as ApiIconVersionStyleColorFileRouteImport } from './routes/api/icon/$version/$style/$color/$file'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +23,41 @@ const TemplatesRoute = TemplatesRouteImport.update({
   path: '/templates',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiIconV1StyleColorFileRoute = ApiIconV1StyleColorFileRouteImport.update({
-  id: '/api/icon/v1/$style/$color/$file',
-  path: '/api/icon/v1/$style/$color/$file',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ApiIconVersionStyleColorFileRoute =
+  ApiIconVersionStyleColorFileRouteImport.update({
+    id: '/api/icon/$version/$style/$color/$file',
+    path: '/api/icon/$version/$style/$color/$file',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/templates': typeof TemplatesRoute
-  '/api/icon/v1/$style/$color/$file': typeof ApiIconV1StyleColorFileRoute
+  '/api/icon/$version/$style/$color/$file': typeof ApiIconVersionStyleColorFileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/templates': typeof TemplatesRoute
-  '/api/icon/v1/$style/$color/$file': typeof ApiIconV1StyleColorFileRoute
+  '/api/icon/$version/$style/$color/$file': typeof ApiIconVersionStyleColorFileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/templates': typeof TemplatesRoute
-  '/api/icon/v1/$style/$color/$file': typeof ApiIconV1StyleColorFileRoute
+  '/api/icon/$version/$style/$color/$file': typeof ApiIconVersionStyleColorFileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/templates' | '/api/icon/v1/$style/$color/$file'
+  fullPaths: '/' | '/templates' | '/api/icon/$version/$style/$color/$file'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/templates' | '/api/icon/v1/$style/$color/$file'
-  id: '__root__' | '/' | '/templates' | '/api/icon/v1/$style/$color/$file'
+  to: '/' | '/templates' | '/api/icon/$version/$style/$color/$file'
+  id: '__root__' | '/' | '/templates' | '/api/icon/$version/$style/$color/$file'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TemplatesRoute: typeof TemplatesRoute
-  ApiIconV1StyleColorFileRoute: typeof ApiIconV1StyleColorFileRoute
+  ApiIconVersionStyleColorFileRoute: typeof ApiIconVersionStyleColorFileRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +76,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/icon/v1/$style/$color/$file': {
-      id: '/api/icon/v1/$style/$color/$file'
-      path: '/api/icon/v1/$style/$color/$file'
-      fullPath: '/api/icon/v1/$style/$color/$file'
-      preLoaderRoute: typeof ApiIconV1StyleColorFileRouteImport
+    '/api/icon/$version/$style/$color/$file': {
+      id: '/api/icon/$version/$style/$color/$file'
+      path: '/api/icon/$version/$style/$color/$file'
+      fullPath: '/api/icon/$version/$style/$color/$file'
+      preLoaderRoute: typeof ApiIconVersionStyleColorFileRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +89,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TemplatesRoute: TemplatesRoute,
-  ApiIconV1StyleColorFileRoute: ApiIconV1StyleColorFileRoute,
+  ApiIconVersionStyleColorFileRoute: ApiIconVersionStyleColorFileRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

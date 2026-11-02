@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import {
   CONTACT_ICON_KEYS,
   CONTACT_ICON_STYLES,
+  ICON_VERSIONS,
   SOCIAL_ICON_KEYS,
   SOCIAL_ICON_STYLES,
   isContactIcon,
@@ -9,9 +10,10 @@ import {
 import type { IconKey, IconStyle } from "@/features/signature/icon-styles"
 import { renderIcon } from "@/server/render-icon"
 
-// Serves signature icons, e.g. /api/icon/v1/soft/ff4800/phone.png.
+// Serves signature icons, e.g. /api/icon/v2/soft/ff4800/phone.png.
 // The URL fully describes the image, so it is cached forever: Netlify's CDN
 // keeps the first render and the function rarely runs again for that URL.
+// Older versions keep their original drawing for emails already sent.
 const IMMUTABLE = "public, max-age=31536000, immutable"
 
 const notFound = () =>
@@ -20,12 +22,14 @@ const notFound = () =>
     headers: { "Content-Type": "text/plain" },
   })
 
-export const Route = createFileRoute("/api/icon/v1/$style/$color/$file")({
+export const Route = createFileRoute("/api/icon/$version/$style/$color/$file")({
   server: {
     handlers: {
       GET: ({ params }) => {
         const key = params.file.replace(/\.png$/, "") as IconKey
         const style = params.style as IconStyle
+        if (!(ICON_VERSIONS as readonly string[]).includes(params.version))
+          return notFound()
         if (!params.file.endsWith(".png")) return notFound()
         if (![...CONTACT_ICON_KEYS, ...SOCIAL_ICON_KEYS].includes(key))
           return notFound()
@@ -46,7 +50,8 @@ export const Route = createFileRoute("/api/icon/v1/$style/$color/$file")({
         const png = renderIcon(
           key,
           style,
-          isBrand ? "#000000" : `#${params.color}`
+          isBrand ? "#000000" : `#${params.color}`,
+          { plate: params.version !== "v1" }
         )
         return new Response(new Uint8Array(png), {
           headers: {
