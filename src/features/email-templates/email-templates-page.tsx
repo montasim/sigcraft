@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react"
+import type { ChangeEvent } from "react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,11 @@ import {
   FieldSet,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { TabsContent } from "@/components/ui/tabs"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
@@ -30,15 +36,19 @@ import {
 } from "@/components/editor-layout"
 import {
   Briefcase01Icon,
+  Building03Icon,
   Calendar03Icon,
+  Clock01Icon,
   Copy01Icon,
   Icon,
   Layout01Icon,
+  Link01Icon,
   MailSend01Icon,
   Refresh01Icon,
   UserGroupIcon,
   UserIcon,
 } from "@/components/icons"
+import type { IconGlyph } from "@/components/icons"
 import { usePersistentState } from "@/hooks/use-persistent-state"
 import { copyText } from "@/lib/clipboard"
 import { cn } from "@/lib/utils"
@@ -55,7 +65,18 @@ import {
   templateFields,
 } from "./email-fields"
 
-const CATEGORY_ICONS: Record<EmailCategory, typeof Briefcase01Icon> = {
+// Icons only for details with a clear kind; free-text details stay plain.
+function fieldIcon(key: string): IconGlyph | undefined {
+  if (key === "Name") return UserIcon
+  if (key === "Company") return Building03Icon
+  if (key === "Role") return Briefcase01Icon
+  if (key === "Job link") return Link01Icon
+  if (/time/i.test(key)) return Clock01Icon
+  if (/day|date/i.test(key)) return Calendar03Icon
+  return undefined
+}
+
+const CATEGORY_ICONS: Record<EmailCategory, IconGlyph> = {
   "Job search": Briefcase01Icon,
   Clients: UserGroupIcon,
   General: Calendar03Icon,
@@ -160,18 +181,32 @@ export function EmailTemplatesPage() {
     else toast.success(`${label} copied`)
   }
 
-  const fieldInput = (key: string) => (
-    <Field key={key}>
-      <FieldLabel htmlFor={`ef-${key}`}>{fieldLabel(key)}</FieldLabel>
-      <Input
-        id={`ef-${key}`}
-        value={values[key] ?? ""}
-        placeholder={FIELD_META[key]?.example}
-        onChange={(e) => setValue(key, e.target.value)}
-        autoComplete="off"
-      />
-    </Field>
-  )
+  const fieldInput = (key: string) => {
+    const icon = fieldIcon(key)
+    const control = {
+      id: `ef-${key}`,
+      value: values[key] ?? "",
+      placeholder: FIELD_META[key]?.example,
+      onChange: (e: ChangeEvent<HTMLInputElement>) =>
+        setValue(key, e.target.value),
+      autoComplete: "off",
+    }
+    return (
+      <Field key={key}>
+        <FieldLabel htmlFor={`ef-${key}`}>{fieldLabel(key)}</FieldLabel>
+        {icon ? (
+          <InputGroup>
+            <InputGroupInput {...control} />
+            <InputGroupAddon>
+              <Icon icon={icon} />
+            </InputGroupAddon>
+          </InputGroup>
+        ) : (
+          <Input {...control} />
+        )}
+      </Field>
+    )
+  }
 
   return (
     <EditorLayout value={step} onValueChange={(v) => setStep(v as StepId)}>
@@ -187,6 +222,7 @@ export function EmailTemplatesPage() {
             count={STEPS.length}
             onStep={(i) => setStep(STEPS[i].id)}
             lastLabel="Create email"
+            lastIcon={MailSend01Icon}
             onLast={() => setDialogOpen(true)}
           />
         }

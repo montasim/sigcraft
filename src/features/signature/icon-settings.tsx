@@ -14,8 +14,14 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { ArrowRight01Icon, Icon } from "@/components/icons"
+import { FIELD_ICONS } from "./field-icons"
 import { COLORS } from "./config"
 import type { SignatureState } from "./config"
 import {
@@ -240,15 +246,20 @@ function CustomIconField({
       <FieldLabel htmlFor={`icon-${iconKey}`}>
         {ICON_LABELS[iconKey]}
       </FieldLabel>
-      <Input
-        id={`icon-${iconKey}`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="https://…/icon.png"
-        autoComplete="off"
-        spellCheck={false}
-        aria-invalid={problem || undefined}
-      />
+      <InputGroup>
+        <InputGroupInput
+          id={`icon-${iconKey}`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://…/icon.png"
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={problem || undefined}
+        />
+        <InputGroupAddon>
+          <Icon icon={FIELD_ICONS[iconKey]} />
+        </InputGroupAddon>
+      </InputGroup>
       {CHECK_MESSAGES[check] ? (
         <FieldDescription>{CHECK_MESSAGES[check]}</FieldDescription>
       ) : null}

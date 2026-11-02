@@ -15,6 +15,7 @@ import {
   InformationCircleIcon,
   Layout01Icon,
   PaintBoardIcon,
+  Pen01Icon,
   Refresh01Icon,
   UserIcon,
 } from "@/components/icons"
@@ -96,6 +97,7 @@ export function SignatureGenerator() {
             count={STEPS.length}
             onStep={(i) => setStep(STEPS[i].id)}
             lastLabel="Create signature"
+            lastIcon={Pen01Icon}
             onLast={() => setDialogOpen(true)}
           />
         }
@@ -129,6 +131,7 @@ export function SignatureGenerator() {
               className="h-11 px-6 text-base shadow-lg shadow-primary/25"
               onClick={() => setDialogOpen(true)}
             >
+              <Icon icon={Pen01Icon} data-icon="inline-start" />
               Create signature
             </Button>
           </div>

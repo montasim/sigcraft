@@ -10,7 +10,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { Copy01Icon, Icon, InformationCircleIcon } from "@/components/icons"
+import {
+  Copy01Icon,
+  FloppyDiskIcon,
+  Icon,
+  InformationCircleIcon,
+  MailSend01Icon,
+  TextIcon,
+} from "@/components/icons"
 import { copyText } from "@/lib/clipboard"
 import type { EmailTemplate } from "./data"
 import { fieldLabel, fillText, missingFields } from "./email-fields"
@@ -117,16 +124,21 @@ export function CreateEmailDialog({
             variant="outline"
             onClick={() => copy("Subject", template.subject)}
           >
+            <Icon icon={TextIcon} data-icon="inline-start" />
             Copy subject
           </Button>
         </div>
         <Separator />
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold">Send it now</h3>
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <Icon icon={MailSend01Icon} className="size-4 text-primary" />
+            Send it now
+          </h3>
           <Steps steps={SEND_STEPS} />
         </div>
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <Icon icon={FloppyDiskIcon} className="size-4 text-primary" />
             Or save it as a Gmail template to reuse
           </h3>
           <Steps steps={SAVE_STEPS} />

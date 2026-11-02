@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { Copy01Icon, Icon } from "@/components/icons"
+import { Copy01Icon, Icon, SourceCodeIcon, TextIcon } from "@/components/icons"
 import { copyHtml, copyText } from "@/lib/clipboard"
 import { GMAIL_SIGNATURE_LIMIT, SITE_URL } from "./config"
 import type { SignatureState } from "./config"
@@ -83,6 +83,7 @@ export function CreateSignatureDialog({
             variant="outline"
             onClick={() => run("HTML", () => copyText(html))}
           >
+            <Icon icon={SourceCodeIcon} data-icon="inline-start" />
             Copy HTML
           </Button>
           <Button
@@ -92,6 +93,7 @@ export function CreateSignatureDialog({
               run("Plain text", () => copyText(buildPlainText(state)))
             }
           >
+            <Icon icon={TextIcon} data-icon="inline-start" />
             Copy plain text
           </Button>
           <Badge

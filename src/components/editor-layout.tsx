@@ -2,7 +2,8 @@ import type { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Icon } from "@/components/icons"
+import { ArrowLeft01Icon, ArrowRight01Icon, Icon } from "@/components/icons"
+import type { IconGlyph } from "@/components/icons"
 import { PanelHeading } from "@/components/panel-heading"
 
 /*
@@ -17,7 +18,7 @@ import { PanelHeading } from "@/components/panel-heading"
 type Step = {
   id: string
   name: string
-  icon: Parameters<typeof Icon>[0]["icon"]
+  icon: IconGlyph
 }
 
 export function EditorLayout({
@@ -104,12 +105,14 @@ export function StepNav({
   count,
   onStep,
   lastLabel,
+  lastIcon,
   onLast,
 }: {
   index: number
   count: number
   onStep: (index: number) => void
   lastLabel: string
+  lastIcon: IconGlyph
   onLast: () => void
 }) {
   const isLast = index === count - 1
@@ -121,6 +124,7 @@ export function StepNav({
         disabled={index === 0}
         onClick={() => onStep(Math.max(0, index - 1))}
       >
+        <Icon icon={ArrowLeft01Icon} data-icon="inline-start" />
         Previous
       </Button>
       <Button
@@ -128,7 +132,17 @@ export function StepNav({
         className="px-0 text-foreground"
         onClick={() => (isLast ? onLast() : onStep(index + 1))}
       >
-        {isLast ? lastLabel : "Next"}
+        {isLast ? (
+          <>
+            <Icon icon={lastIcon} data-icon="inline-start" />
+            {lastLabel}
+          </>
+        ) : (
+          <>
+            Next
+            <Icon icon={ArrowRight01Icon} data-icon="inline-end" />
+          </>
+        )}
       </Button>
     </>
   )

@@ -10,6 +10,11 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -18,7 +23,8 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Icon, Tick02Icon } from "@/components/icons"
+import { Icon, Image01Icon, Link01Icon, Tick02Icon } from "@/components/icons"
+import type { IconGlyph } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import {
   FONTS,
@@ -47,6 +53,7 @@ import {
   IconStyleFields,
   ThemeColorField,
 } from "./icon-settings"
+import { FIELD_ICONS } from "./field-icons"
 import { TemplateThumbnail } from "./template-thumbnail"
 
 type StepProps = {
@@ -65,22 +72,35 @@ function TextField({
   description,
   className,
   invalid,
+  icon,
   ...input
 }: {
   id: string
   label: string
   description?: string
   invalid?: boolean
+  /** Leading icon for contact details and links. */
+  icon?: IconGlyph
 } & ComponentProps<typeof Input>) {
+  const control = {
+    id,
+    autoComplete: "off",
+    "aria-invalid": invalid || undefined,
+    ...input,
+  }
   return (
     <Field className={className} data-invalid={invalid || undefined}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Input
-        id={id}
-        autoComplete="off"
-        aria-invalid={invalid || undefined}
-        {...input}
-      />
+      {icon ? (
+        <InputGroup>
+          <InputGroupInput {...control} />
+          <InputGroupAddon>
+            <Icon icon={icon} />
+          </InputGroupAddon>
+        </InputGroup>
+      ) : (
+        <Input {...control} />
+      )}
       {description ? <FieldDescription>{description}</FieldDescription> : null}
     </Field>
   )
@@ -116,6 +136,14 @@ export function DetailsStep({ state, setState }: StepProps) {
           {field("title", "Job title")}
           {field("dept", "Department", { placeholder: "Engineering" })}
           {field("company", "Company", { placeholder: "Company name" })}
+          {field("companyUrl", "Company website", {
+            placeholder: "company.com",
+            inputMode: "url",
+            icon: Link01Icon,
+            description: f.company
+              ? "Links your company name."
+              : "Needs a company name.",
+          })}
           {field("pronouns", "Pronouns", { placeholder: "He / Him" })}
           {field("slogan", "Slogan", {
             className: "sm:col-span-2",
@@ -131,21 +159,30 @@ export function DetailsStep({ state, setState }: StepProps) {
           {field("office", "Office phone", {
             placeholder: "+880 2 XXXX XXXX",
             inputMode: "tel",
+            icon: FIELD_ICONS.phone,
           })}
           {field("mobile", "Mobile phone", {
             placeholder: "+8801722815469",
             inputMode: "tel",
+            icon: FIELD_ICONS.mobile,
             invalid: noPhone,
             description: noPhone
               ? "Add a number so people can call you."
               : undefined,
           })}
-          {field("web", "Website", { placeholder: "montasim.dev" })}
+          {field("web", "Website", {
+            placeholder: "montasim.dev",
+            icon: FIELD_ICONS.web,
+          })}
           {field("email", "Email", {
             placeholder: "montasimmamun@gmail.com",
             inputMode: "email",
+            icon: FIELD_ICONS.email,
           })}
-          {field("address", "Address", { className: "sm:col-span-2" })}
+          {field("address", "Address", {
+            className: "sm:col-span-2",
+            icon: FIELD_ICONS.location,
+          })}
         </FieldGroup>
       </FieldSet>
       <FieldSet>
@@ -156,6 +193,7 @@ export function DetailsStep({ state, setState }: StepProps) {
               key={so.key}
               id={`f-${so.key}`}
               label={so.label}
+              icon={FIELD_ICONS[so.key]}
               placeholder={so.placeholder}
               value={f[so.key]}
               onChange={(e) => set(so.key, e.target.value)}
@@ -190,6 +228,7 @@ export function ImagesStep({ state, setState }: StepProps) {
         <TextField
           id="f-photo"
           label="Profile photo URL"
+          icon={Image01Icon}
           description="Must be a public image address that stays online."
           value={state.fields.photo}
           onChange={(e) => set("photo", e.target.value)}
@@ -452,6 +491,7 @@ export function StylesStep({ state, setState }: StepProps) {
           <TextField
             id="f-ctaurl"
             label="Button link"
+            icon={Link01Icon}
             placeholder="montasim.dev"
             value={state.fields.ctaUrl}
             onChange={(e) => set("ctaUrl", e.target.value)}

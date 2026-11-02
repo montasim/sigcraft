@@ -1,24 +1,45 @@
 // One place for the Hugeicons the app uses, so components import by purpose.
+import type { HugeiconsIcon } from "@hugeicons/react"
+
 export { HugeiconsIcon as Icon } from "@hugeicons/react"
+/** Any icon from the set below, as passed to <Icon icon={…} />. */
+export type IconGlyph = Parameters<typeof HugeiconsIcon>[0]["icon"]
 export {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Briefcase01Icon,
+  Building03Icon,
   Calendar03Icon,
+  Call02Icon,
+  Clock01Icon,
   ComputerIcon,
   Copy01Icon,
+  Facebook01Icon,
+  FloppyDiskIcon,
+  Github01Icon,
   Globe02Icon,
   Image01Icon,
   InformationCircleIcon,
+  InstagramIcon,
   Layout01Icon,
+  Link01Icon,
+  Linkedin01Icon,
+  Location01Icon,
+  Mail01Icon,
   MailEdit01Icon,
   MailSend01Icon,
   Moon02Icon,
+  NewTwitterIcon,
   PaintBoardIcon,
   Pen01Icon,
   Refresh01Icon,
+  SmartPhone01Icon,
+  SourceCodeIcon,
   Sun03Icon,
+  TextIcon,
   Tick02Icon,
   UserGroupIcon,
   UserIcon,
+  WhatsappIcon,
+  YoutubeIcon,
 } from "@hugeicons/core-free-icons"
