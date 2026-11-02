@@ -120,6 +120,11 @@
   .mail-body img {
     max-width: none;
   }
+  /* Keep the signature at its natural width in a narrow preview, scrolling
+     sideways instead of squeezing it into lines Gmail wouldn't wrap. */
+  .mail-body > table {
+    width: max-content;
+  }
 }
 
 @layer base {
