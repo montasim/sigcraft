@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Dark mode is a class on <html>, set by the theme toggle (or from the
+   operating system when the toggle is on "System"). */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Fraunces", Georgia, ui-serif, serif;
+  --font-mono: "Geist Mono", ui-monospace, Consolas, monospace;
+  --color-stage: var(--stage);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Palette: off-white and cream grounds, near-black ink, one bright orange
+   accent with a peach tint. */
+:root {
+  --radius: 0.625rem;
+  --background: #fcfcfa;
+  --foreground: #1f1f1f;
+  --card: #ffffff;
+  --card-foreground: #1f1f1f;
+  --popover: #ffffff;
+  --popover-foreground: #1f1f1f;
+  --primary: #ff4800;
+  --primary-foreground: #ffffff;
+  --secondary: #f8f5ee;
+  --secondary-foreground: #1f1f1f;
+  --muted: #f3f0e8;
+  --muted-foreground: #6b665e;
+  --accent: #fcded2;
+  --accent-foreground: #8a2a00;
+  --destructive: #d92d20;
+  --border: #e6e2d9;
+  --input: #e6e2d9;
+  --ring: #ff4800;
+  --stage: #f8f5ee;
+  --brand-soft: #fcded2;
+  --brand-ink: #b33200;
+  --highlight: #fde6c4;
+  --highlight-foreground: #6a3a00;
+}
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  --background: #141311;
+  --foreground: #f3f1ec;
+  --card: #1a1917;
+  --card-foreground: #f3f1ec;
+  --popover: #1a1917;
+  --popover-foreground: #f3f1ec;
+  --primary: #ff4800;
+  --primary-foreground: #ffffff;
+  --secondary: #22201d;
+  --secondary-foreground: #f3f1ec;
+  --muted: #22201d;
+  --muted-foreground: #a8a39a;
+  --accent: #3a2418;
+  --accent-foreground: #ffb48f;
+  --destructive: #f97066;
+  --border: #33302b;
+  --input: #33302b;
+  --ring: #ff6a2b;
+  --stage: #1d1b18;
+  --brand-soft: #3a2418;
+  --brand-ink: #ff8a5c;
+  --highlight: #4a3510;
+  --highlight-foreground: #ffe0a8;
+  color-scheme: dark;
+}
+
+/* Mirrors Gmail's compose body, so the preview renders the signature's email
+   HTML exactly as Gmail will. Kept outside Tailwind's preflight on purpose. */
+@layer components {
+  .mail-body {
+    padding: 26px 16px 34px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    line-height: normal;
+    color: #222222;
+    overflow-x: auto;
+  }
+  .mail-body,
+  .mail-body * {
+    box-sizing: content-box;
+  }
+  .mail-body img {
+    max-width: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  /* Colour inputs: show the chosen colour as a full circle, matching the
+     round theme-colour swatches, instead of the browser's square chip. */
+  input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+  input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 9999px;
+  }
+  input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 9999px;
+  }
+}
+
+/* SupportKori widget: restyles the provider's trigger and panel to match the
+   app's primary button and card surfaces. The provider injects its own CSS
+   after this file, so these rules stay unlayered and use a "body" prefix to
+   win on specificity instead of !important. Selectors cover only the two
+   elements the provider owns. */
+body .sk-widget-btn {
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 40; /* below dialogs (z-50) so a modal covers it */
+  min-height: 2.75rem;
+  gap: 0.5rem;
+  padding: 0 1.125rem 0 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 6px 16px -8px rgb(255 72 0 / 0.7);
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+body .sk-widget-btn:hover {
+  transform: none;
+  background: color-mix(in oklch, var(--primary), black 8%);
+}
+body .sk-widget-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--background),
+    0 0 0 6px color-mix(in oklch, var(--ring), transparent 40%);
+}
+body .sk-widget-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+body .sk-widget-iframe-container {
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.5rem);
+  z-index: 45;
+  width: min(22rem, calc(100vw - 2rem));
+  height: min(34rem, calc(100dvh - 7rem));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  box-shadow: 0 24px 48px -16px rgb(0 0 0 / 0.25);
+}
+body .sk-widget-iframe {
+  border-radius: var(--radius-xl);
+}
+@media (prefers-reduced-motion: reduce) {
+  body .sk-widget-btn,
+  body .sk-widget-iframe-container {
+    transition: none;
+  }
+}
