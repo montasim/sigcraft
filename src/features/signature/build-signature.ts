@@ -28,6 +28,7 @@ export type BuildTarget = "preview" | "copy"
 
 const MUTED = "#6b7280"
 const RULE = "#e5e7eb"
+const PANEL = "#f6f7f9"
 
 const esc = (s: string) =>
   s.replace(
@@ -52,8 +53,18 @@ const fullUrl = (u: string) =>
 const tel = (p: string) => "tel:" + p.replace(/[^\d+]/g, "")
 const isHex = (v: string) => /^#[0-9a-f]{6}$/i.test(v)
 
-const TB = (inner: string, attrs = "") =>
-  `<table cellpadding="0" cellspacing="0" border="0"${attrs} style="border-collapse:collapse;">${inner}</table>`
+// A table's align attribute positions it through its margins. Pages that
+// reset margins (the app's own CSS does) would undo that, so the same margins
+// are also set inline.
+const ALIGN_MARGIN = {
+  center: "margin-left:auto;margin-right:auto;",
+  right: "margin-left:auto;margin-right:0;",
+}
+const TB = (inner: string, attrs = "") => {
+  const align = /align="(center|right)"/.exec(attrs)?.[1] as
+    keyof typeof ALIGN_MARGIN | undefined
+  return `<table cellpadding="0" cellspacing="0" border="0"${attrs} style="border-collapse:collapse;${align ? ALIGN_MARGIN[align] : ""}">${inner}</table>`
+}
 const TD = (inner: string, style = "", attrs = "") =>
   `<td${attrs} style="padding:0;vertical-align:top;${style}">${inner}</td>`
 const TR = (...cells: string[]) => `<tr>${cells.join("")}</tr>`
@@ -97,17 +108,18 @@ function createKit(s: SignatureState, target: BuildTarget) {
   const a = (href: string, label: string) =>
     `<a href="${esc(href)}" target="_blank" style="color:${link};text-decoration:none;">${esc(label)}</a>`
 
-  const photo = (size = photoPx) =>
+  const photo = (size: number = photoPx) =>
     s.showPhoto ? img(photoSrc(), size, radius, name) : ""
 
   // One short line in a muted (or theme) colour, so it reads as a sign-off
   // rather than competing with the name and title.
   const sloganText = f.slogan.trim().slice(0, SLOGAN_MAX_LENGTH)
-  // maxWidth makes a long slogan wrap instead of stretching the layout; it is
-  // a fixed pixel cap, so the signature keeps the same size in any window.
+  // A numeric maxWidth makes a long slogan wrap instead of stretching the
+  // layout; it is a fixed pixel cap, so the signature keeps the same size in
+  // any window. "line" keeps it on one line instead.
   const slogan = (
     align: "left" | "center" = "left",
-    maxWidth: number,
+    maxWidth: number | "line",
     extra = ""
   ) => {
     if (!sloganText) return ""
@@ -118,24 +130,104 @@ function createKit(s: SignatureState, target: BuildTarget) {
         ? `border-left:2px solid ${theme};padding-left:8px;`
         : ""
     const center = align === "center" ? "margin:0 auto;" : ""
-    return `<div style="${T(base - 1, accent ? theme : MUTED, `${italic}${bar}max-width:${maxWidth}px;${center}text-align:${align};${extra}`)}">${esc(sloganText)}</div>`
+    const width =
+      maxWidth === "line" ? "white-space:nowrap;" : `max-width:${maxWidth}px;`
+    return `<div style="${T(base - 1, accent ? theme : MUTED, `${italic}${bar}${width}${center}text-align:${align};${extra}`)}">${esc(sloganText)}</div>`
   }
 
-  const nameBlock = (align: "left" | "center" = "left") => {
+  // Variants:
+  // - "dark": white text for a theme-coloured banner
+  // - "elegant": a light-weight name over a spaced-out uppercase title
+  // - "accent": the title in the theme colour
+  // - "pill": the title as a small filled label
+  // - "underline": a theme-coloured rule under the name only
+  // - "headline": a large name over a small uppercase title in the theme colour
+  // - "inline": name, title and organisation on one line
+  type NameStyle =
+    | "default"
+    | "dark"
+    | "elegant"
+    | "accent"
+    | "pill"
+    | "underline"
+    | "headline"
+    | "inline"
+  const nameBlock = (
+    align: "left" | "center" = "left",
+    style: NameStyle = "default"
+  ) => {
     const ta = `text-align:${align};`
-    const sep = `<span style="color:${theme};">&nbsp;|&nbsp;</span>`
+    const dark = style === "dark"
+    const ink = dark ? "#ffffff" : text
+    const sep = `<span style="color:${dark ? "#ffffff" : theme};">&nbsp;|&nbsp;</span>`
     const org = [f.dept, f.company].filter(Boolean).map(esc).join(sep)
+    // A banner can't hold the muted slogan; that layout places it itself.
     const underName =
-      s.sloganPosition === "name" ? slogan(align, 300, "padding-top:4px;") : ""
+      s.sloganPosition === "name" && !dark
+        ? slogan(align, 300, "padding-top:4px;")
+        : ""
+    const pronouns = f.pronouns
+      ? `<div style="${T(base - 1, dark ? "#ffffff" : MUTED, ta)}">${esc(f.pronouns)}</div>`
+      : ""
+
+    if (style === "inline") {
+      const dot = `<span style="color:${theme};">&nbsp;&middot;&nbsp;</span>`
+      const rest = [f.title, f.dept, f.company].filter(Boolean).map(esc)
+      return (
+        `<div style="${T(base + 2, text, ta)}"><span style="font-weight:bold;">${esc(name)}</span>${rest.length ? `<span style="color:${MUTED};">${dot}${rest.join(dot)}</span>` : ""}</div>` +
+        pronouns +
+        underName
+      )
+    }
+
+    const nameCss =
+      style === "elegant"
+        ? T(base + 7, ink, "font-weight:normal;letter-spacing:0.2px;" + ta)
+        : style === "headline"
+          ? T(base + 11, ink, "font-weight:bold;letter-spacing:-0.5px;" + ta)
+          : T(base + 5, ink, "font-weight:bold;" + ta)
+    const nameHtml =
+      style === "underline"
+        ? TB(
+            TR(
+              TD(
+                esc(name),
+                `${nameCss}padding-bottom:4px;border-bottom:2px solid ${theme};`
+              )
+            ),
+            align === "center" ? ' align="center"' : ""
+          )
+        : `<div style="${nameCss}">${esc(name)}</div>`
+    const titleCss =
+      style === "elegant"
+        ? T(
+            base - 2,
+            MUTED,
+            "text-transform:uppercase;letter-spacing:1.5px;padding-top:2px;" +
+              ta
+          )
+        : style === "headline"
+          ? T(
+              base - 2,
+              theme,
+              "font-weight:bold;text-transform:uppercase;letter-spacing:1.2px;" +
+                ta
+            )
+          : style === "accent"
+            ? T(base, theme, "font-weight:bold;" + ta)
+            : style === "underline"
+              ? T(base, ink, "padding-top:6px;" + ta)
+              : T(base, ink, ta)
+    const title = !f.title
+      ? ""
+      : style === "pill"
+        ? `<div style="${T(base, ink, `padding:4px 0 2px;${ta}`)}">${titlePill()}</div>`
+        : `<div style="${titleCss}">${esc(f.title)}</div>`
     return (
-      `<div style="${T(base + 5, text, "font-weight:bold;" + ta)}">${esc(name)}</div>` +
-      (f.title
-        ? `<div style="${T(base, text, ta)}">${esc(f.title)}</div>`
-        : "") +
-      (org ? `<div style="${T(base, text, ta)}">${org}</div>` : "") +
-      (f.pronouns
-        ? `<div style="${T(base - 1, MUTED, ta)}">${esc(f.pronouns)}</div>`
-        : "") +
+      nameHtml +
+      title +
+      (org ? `<div style="${T(base, ink, ta)}">${org}</div>` : "") +
+      pronouns +
       underName
     )
   }
@@ -254,6 +346,115 @@ function createKit(s: SignatureState, target: BuildTarget) {
       : ""
   }
 
+  // Name block with a rule under it as wide as the widest line, usually the
+  // name: the inner table shrinks to its text and the rule fills it.
+  const underlinedName = () => stack(10, nameBlock(), hr("fill", theme))
+
+  // Centres a block in its cell. Images are display:block and contact lists
+  // are tables, so text-align alone doesn't move them; a centred table does.
+  const centered = (html: string) =>
+    html ? TB(TR(TD(html)), ' align="center"') : ""
+
+  // The theme colour mixed with white, for soft panel backgrounds. A solid
+  // hex rather than transparency, which email clients handle unevenly.
+  const tint = (amount: number) =>
+    "#" +
+    [1, 3, 5]
+      .map((i) => {
+        const c = parseInt(theme.slice(i, i + 2), 16)
+        return Math.round(c + (255 - c) * amount)
+          .toString(16)
+          .padStart(2, "0")
+      })
+      .join("")
+
+  // Initials on a theme-coloured tile, used where a photo would go.
+  const monogram = (size: number = photoPx) => {
+    const letters = [f.first, f.last]
+      .map((p) => p.trim().split(/\s+/)[0]?.[0] ?? "")
+      .join("")
+      .toUpperCase()
+    return TB(
+      TR(
+        TD(
+          esc(letters),
+          `${T(Math.round(size * 0.36), "#ffffff", `font-weight:bold;line-height:${size}px;`)}width:${size}px;height:${size}px;text-align:center;vertical-align:middle;background-color:${theme};border-radius:${radius};`,
+          ` width="${size}" height="${size}" bgcolor="${theme}" align="center"`
+        )
+      )
+    )
+  }
+
+  // The job title as a small filled label.
+  const titlePill = () =>
+    f.title
+      ? `<span style="${T(base - 2, "#ffffff", `font-weight:bold;background-color:${theme};border-radius:10px;padding:2px 9px;white-space:nowrap;`)}">${esc(f.title)}</span>`
+      : ""
+
+  // Contacts on one line, each with its icon, for wide, short layouts.
+  const contactsInline = () => {
+    const list = contactItems()
+    if (!list.length) return ""
+    return TB(
+      TR(
+        ...list.flatMap((it, i) => {
+          const gap = i < list.length - 1 ? "padding-right:16px;" : ""
+          return [
+            s.showIcons
+              ? TD(
+                  icon(it.key, 16, ""),
+                  "padding-right:6px;vertical-align:middle;width:16px;"
+                )
+              : "",
+            TD(
+              it.html,
+              `${T(base - 1, text, "white-space:nowrap;")}vertical-align:middle;${gap}`
+            ),
+          ]
+        })
+      )
+    )
+  }
+
+  // Contacts as plain text on one line, separated by dots.
+  const contactsText = (align: "left" | "center" = "left") => {
+    const list = contactItems()
+    if (!list.length) return ""
+    const dot = `<span style="color:${theme};">&nbsp;&middot;&nbsp;</span>`
+    return `<div style="${T(base - 1, text, `text-align:${align};`)}">${list.map((it) => it.html).join(dot)}</div>`
+  }
+
+  // Contacts with a short text label in the theme colour instead of an icon,
+  // like a printed business card.
+  const LABELS: Record<ContactIconKey, string> = {
+    phone: "T",
+    mobile: "M",
+    email: "E",
+    web: "W",
+    location: "A",
+  }
+  const contactsLabeled = () => {
+    const list = contactItems()
+    if (!list.length) return ""
+    return TB(
+      list
+        .map((it, i) => {
+          const pb = i < list.length - 1 ? 4 : 0
+          return TR(
+            TD(
+              LABELS[it.key],
+              `${T(base, theme, "font-weight:bold;")}padding:0 10px ${pb}px 0;width:12px;`
+            ),
+            TD(
+              it.html,
+              `${T(base, text, "white-space:nowrap;")}padding:0 0 ${pb}px 0;`
+            )
+          )
+        })
+        .join("")
+    )
+  }
+
   const photoCell = (style = "", attrs = "") =>
     s.showPhoto ? TD(photo(), style, attrs) : ""
 
@@ -263,6 +464,14 @@ function createKit(s: SignatureState, target: BuildTarget) {
     cols,
     photo,
     nameBlock,
+    underlinedName,
+    centered,
+    tint,
+    monogram,
+    titlePill,
+    contactsInline,
+    contactsText,
+    contactsLabeled,
     slogan,
     contacts,
     socials,
@@ -289,22 +498,15 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
               ' align="center"'
             )
           : "",
-        TD(
-          k.stack(10, k.nameBlock(), k.hr(160, k.theme), k.contacts(), k.cta())
-        )
+        TD(k.stack(10, k.underlinedName(), k.contacts(), k.cta()))
       )
     ),
+  // Everything on one centre line: photo, name, rule, the contact list as a
+  // centred block (its rows stay left-aligned so the icons line up), then
+  // the social icons and button.
   2: (k) =>
     TB(
-      (k.s.showPhoto
-        ? TR(
-            TD(
-              k.photo(),
-              "text-align:center;font-size:0;line-height:0;",
-              ' align="center"'
-            )
-          )
-        : "") +
+      (k.s.showPhoto ? TR(TD(k.centered(k.photo()))) : "") +
         TR(
           TD(
             k.nameBlock("center"),
@@ -313,21 +515,16 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
           )
         ) +
         TR(TD(k.hr("fill", k.theme), "padding-top:12px;")) +
-        TR(
-          TD(
-            TB(
-              TR(
-                TD(k.contacts(), "padding-right:28px;"),
-                TD(
-                  k.stack(8, k.socials("right"), k.cta("right")),
-                  "vertical-align:bottom;",
-                  ' align="right"'
-                )
+        TR(TD(k.centered(k.contacts()), "padding-top:12px;")) +
+        (k.socials() || k.cta()
+          ? TR(
+              TD(
+                k.stack(10, k.socials("center"), k.cta("center")),
+                "padding-top:14px;",
+                ' align="center"'
               )
-            ),
-            "padding-top:12px;"
-          )
-        )
+            )
+          : "")
     ),
   3: (k) =>
     TB(
@@ -352,7 +549,7 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
     TB(
       TR(
         TD(
-          k.stack(10, k.nameBlock(), k.hr(160, k.theme), k.contacts(), k.cta()),
+          k.stack(10, k.underlinedName(), k.contacts(), k.cta()),
           "padding-right:24px;"
         ),
         k.s.showPhoto || k.socials()
@@ -409,18 +606,10 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
         TR(
           TD(k.hr("fill", k.theme), "padding-top:12px;", ` colspan="${k.cols}"`)
         ) +
+        TR(TD(k.contacts(), "padding-top:12px;", ` colspan="${k.cols}"`)) +
         TR(
           TD(
-            TB(
-              TR(
-                TD(k.contacts(), "padding-right:28px;"),
-                TD(
-                  k.stack(8, k.socials("right"), k.cta("right")),
-                  "vertical-align:bottom;",
-                  ' align="right"'
-                )
-              )
-            ),
+            k.row(16, k.socials(), k.cta()),
             "padding-top:12px;",
             ` colspan="${k.cols}"`
           )
@@ -465,9 +654,9 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
         ) +
         TR(
           TD(
-            k.stack(10, k.socials("center"), k.cta("center")),
+            k.row(16, k.socials(), k.cta()),
             "padding-top:12px;",
-            ` colspan="${k.cols}" align="center"`
+            ` colspan="${k.cols}"`
           )
         )
     ),
@@ -489,8 +678,9 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
         TD(
           k.stack(
             10,
-            k.nameBlock(),
-            k.hr(48, k.theme, 3),
+            // A short, thin accent that closes the name block rather than
+            // floating between it and the contacts.
+            k.stack(6, k.nameBlock(), k.hr(28, k.theme, 2)),
             k.contacts(),
             k.socials(),
             k.cta()
@@ -518,22 +708,295 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
           )
         )
     ),
+  // Banner: name and title in white on a theme-coloured header, details on a
+  // light panel below.
+  13: (k) =>
+    TB(
+      TR(
+        TD(
+          k.row(14, k.photo(64), k.nameBlock("left", "dark")),
+          `background-color:${k.theme};border-radius:8px 8px 0 0;padding:16px 20px;`,
+          ` bgcolor="${k.theme}"`
+        )
+      ) +
+        TR(
+          TD(
+            k.stack(
+              12,
+              k.s.sloganPosition === "name" ? k.slogan("left", 300) : "",
+              k.contacts(),
+              k.row(16, k.socials(), k.cta())
+            ),
+            `background-color:${PANEL};border-radius:0 0 8px 8px;padding:16px 20px;`,
+            ` bgcolor="${PANEL}"`
+          )
+        )
+    ),
+  // Card: a soft bordered card, the title as a filled label, and the contact
+  // list on its own white inset.
+  14: (k) =>
+    TB(
+      TR(
+        TD(
+          TB(
+            TR(
+              k.s.showPhoto
+                ? TD(k.photo(72), "padding-right:18px;vertical-align:top;")
+                : "",
+              TD(
+                k.stack(
+                  12,
+                  k.nameBlock("left", "pill"),
+                  k.contacts()
+                    ? TB(
+                        TR(
+                          TD(
+                            k.contacts(),
+                            `background-color:#ffffff;border:1px solid ${RULE};border-radius:8px;padding:10px 12px;`,
+                            ' bgcolor="#ffffff"'
+                          )
+                        )
+                      )
+                    : "",
+                  k.row(16, k.socials(), k.cta())
+                )
+              )
+            )
+          ),
+          `background-color:${PANEL};border:1px solid ${RULE};border-radius:12px;padding:18px;`,
+          ` bgcolor="${PANEL}"`
+        )
+      )
+    ),
+  // Minimal: one line for who you are, one for how to reach you.
+  15: (k) =>
+    k.row(
+      14,
+      k.photo(56),
+      k.stack(6, k.nameBlock("left", "inline"), k.contactsText(), k.socials())
+    ),
+  // Elegant: a light-weight name, spaced-out uppercase title and hairline.
+  16: (k) =>
+    TB(
+      TR(
+        k.photoCell("padding-right:20px;vertical-align:middle;"),
+        TD(
+          k.stack(
+            12,
+            k.nameBlock("left", "elegant"),
+            k.hr("fill"),
+            k.contacts(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          "vertical-align:middle;"
+        )
+      )
+    ),
+  // Corporate: a solid bar down the left edge, the title in the theme colour.
+  17: (k) =>
+    TB(
+      TR(
+        TD(
+          k.stack(
+            10,
+            k.nameBlock("left", "accent"),
+            k.hr("fill"),
+            k.contacts(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          `border-left:4px solid ${k.theme};padding-left:16px;`
+        ),
+        k.photoCell("padding-left:24px;vertical-align:middle;")
+      )
+    ),
+  // Ribbon: contacts in two columns between a theme rule and a tinted rule.
+  // One column throughout, so the rules span the full width and the photo
+  // stays next to the name however wide the contacts are.
+  18: (k) =>
+    TB(
+      TR(TD(k.row(14, k.photo(), k.nameBlock()))) +
+        TR(TD("", "height:12px;font-size:0;line-height:0;")) +
+        TR(
+          TD(
+            TB(
+              TR(
+                TD(k.contacts(["phone", "email"]), "padding-right:24px;"),
+                TD(k.contacts(["web", "location"]))
+              )
+            ),
+            `padding:10px 0;border-top:2px solid ${k.theme};border-bottom:2px solid ${k.tint(0.7)};`
+          )
+        ) +
+        TR(TD(k.row(16, k.socials(), k.cta()), "padding-top:12px;"))
+    ),
+  // Classic: the name underlined in the theme colour, photo on the right.
+  19: (k) =>
+    TB(
+      TR(
+        TD(
+          k.stack(
+            12,
+            k.nameBlock("left", "underline"),
+            k.contacts(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          "padding-right:24px;vertical-align:middle;"
+        ),
+        k.photoCell("vertical-align:middle;")
+      )
+    ),
+  // Monogram: your initials on a coloured tile instead of a photo.
+  20: (k) =>
+    TB(
+      TR(
+        TD(k.monogram(64), "padding-right:16px;vertical-align:top;"),
+        TD(
+          k.stack(
+            10,
+            k.nameBlock(),
+            k.contacts(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          `padding-left:16px;border-left:1px solid ${RULE};`
+        )
+      )
+    ),
+  // Inline: short and wide, with every contact on a single line.
+  21: (k) =>
+    TB(
+      TR(TD(k.row(14, k.photo(56), k.nameBlock()))) +
+        TR(TD(k.hr("fill", k.theme), "padding-top:12px;")) +
+        TR(TD(k.contactsInline(), "padding-top:10px;")) +
+        TR(TD(k.row(16, k.socials(), k.cta()), "padding-top:12px;"))
+    ),
+  // Split: a tinted side panel with the photo (or initials) and social
+  // icons, details in a bordered panel beside it.
+  22: (k) =>
+    TB(
+      TR(
+        TD(
+          k.stack(
+            12,
+            k.centered(k.s.showPhoto ? k.photo(80) : k.monogram(80)),
+            k.socials("center")
+          ),
+          `background-color:${k.tint(0.9)};border-radius:12px 0 0 12px;padding:18px;vertical-align:middle;`,
+          ` bgcolor="${k.tint(0.9)}" align="center"`
+        ),
+        TD(
+          k.stack(
+            10,
+            k.nameBlock(),
+            k.hr("fill", k.theme),
+            k.contacts(),
+            k.cta()
+          ),
+          `border:1px solid ${RULE};border-left:0;border-radius:0 12px 12px 0;padding:18px 20px;vertical-align:middle;`
+        )
+      )
+    ),
+  // Footer strip: social icons and the button on a tinted strip underneath.
+  23: (k) => {
+    const strip = k.row(16, k.socials(), k.cta())
+    return TB(
+      TR(
+        k.photoCell("padding-right:16px;vertical-align:middle;"),
+        TD(k.stack(10, k.nameBlock(), k.contacts()), "vertical-align:middle;")
+      ) +
+        (strip
+          ? TR(
+              TD(
+                "",
+                "height:14px;font-size:0;line-height:0;",
+                ` colspan="${k.cols}"`
+              )
+            ) +
+            TR(
+              TD(
+                strip,
+                `background-color:${k.tint(0.9)};border-radius:8px;padding:8px 12px;`,
+                ` colspan="${k.cols}" bgcolor="${k.tint(0.9)}"`
+              )
+            )
+          : "")
+    )
+  },
+  // Centred minimal: a centred column with every contact on one line.
+  24: (k) =>
+    TB(
+      (k.s.showPhoto ? TR(TD(k.centered(k.photo(72)))) : "") +
+        TR(
+          TD(
+            k.nameBlock("center"),
+            k.s.showPhoto ? "padding-top:10px;" : "",
+            ' align="center"'
+          )
+        ) +
+        TR(TD(k.centered(k.hr(28, k.theme, 2)), "padding-top:10px;")) +
+        TR(TD(k.centered(k.contactsInline()), "padding-top:10px;")) +
+        (k.socials() || k.cta()
+          ? TR(
+              TD(
+                k.stack(10, k.socials("center"), k.cta("center")),
+                "padding-top:12px;",
+                ' align="center"'
+              )
+            )
+          : "")
+    ),
+  // Headline: a large name, the title in small theme-coloured capitals.
+  25: (k) =>
+    TB(
+      TR(
+        TD(
+          k.stack(
+            12,
+            k.nameBlock("left", "headline"),
+            k.contactsInline(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          "padding-right:24px;vertical-align:middle;"
+        ),
+        k.photoCell("vertical-align:middle;")
+      )
+    ),
+  // Business card: contacts labelled with letters instead of icons.
+  26: (k) =>
+    TB(
+      TR(
+        k.photoCell("padding-right:18px;vertical-align:middle;"),
+        TD(
+          k.stack(
+            10,
+            k.nameBlock(),
+            k.hr("fill"),
+            k.contactsLabeled(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          "vertical-align:middle;"
+        )
+      )
+    ),
 }
+
+// Layouts arranged on one centre line; a footer slogan stays centred too.
+const CENTERED: ReadonlySet<TemplateId> = new Set<TemplateId>([2, 24])
 
 export function buildSignature(state: SignatureState, target: BuildTarget) {
   const k = createKit(state, target)
   const body = LAYOUTS[state.template](k)
   if (state.sloganPosition !== "footer" || !k.slogan("left", 0)) return body
 
-  // Footer slogan: below the whole layout, after a thin divider. The centred
-  // template keeps it centred.
-  const align = state.template === 2 ? "center" : "left"
+  // Footer slogan: below the whole layout, after a thin divider, on one line.
+  // The divider spans the wider of the layout and the slogan. Centred
+  // templates keep it centred.
+  const align = CENTERED.has(state.template) ? "center" : "left"
   return TB(
-    TR(TD(body)) +
+    TR(TD(body, "", align === "center" ? ' align="center"' : "")) +
       TR(TD(k.hr("fill"), "padding-top:14px;")) +
       TR(
         TD(
-          k.slogan(align, 520),
+          k.slogan(align, "line"),
           "padding-top:10px;",
           align === "center" ? ' align="center"' : ""
         )

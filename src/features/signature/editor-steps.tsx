@@ -30,6 +30,7 @@ import {
   SLOGAN_STYLES,
   SOCIALS,
   TEMPLATE_IDS,
+  TEMPLATE_NAMES,
 } from "./config"
 import type {
   FontId,
@@ -251,11 +252,11 @@ export function TemplatesStep({ state, setState }: StepProps) {
           <ToggleGroupItem
             key={id}
             value={String(id)}
-            aria-label={`Template ${id}`}
+            aria-label={TEMPLATE_NAMES[id]}
             className="group/tpl relative h-auto flex-col items-stretch gap-2 rounded-xl p-0 hover:bg-transparent data-[state=on]:bg-transparent"
           >
             <span className="text-left text-sm font-semibold">
-              Template {id}
+              {TEMPLATE_NAMES[id]}
             </span>
             <span className="relative rounded-lg bg-card p-3 ring-1 ring-border transition-shadow group-data-[state=on]/tpl:ring-3 group-data-[state=on]/tpl:ring-primary">
               <TemplateThumbnail id={id} />

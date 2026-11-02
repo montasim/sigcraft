@@ -98,8 +98,42 @@ export const FONT_SIZES = {
 } as const
 export type SizeId = keyof typeof PHOTO_SIZES
 
-export const TEMPLATE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
+export const TEMPLATE_IDS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+  23, 24, 25, 26,
+] as const
 export type TemplateId = (typeof TEMPLATE_IDS)[number]
+
+// Shown in the template picker. The ids stay numbers so saved choices keep
+// working.
+export const TEMPLATE_NAMES: Record<TemplateId, string> = {
+  1: "Photo left",
+  2: "Centred",
+  3: "Three columns",
+  4: "Photo right",
+  5: "Header photo",
+  6: "Side divider",
+  7: "Accent rule",
+  8: "Two-column contacts",
+  9: "Stacked",
+  10: "Photo panel",
+  11: "Compact",
+  12: "Name on top",
+  13: "Banner",
+  14: "Card",
+  15: "Minimal",
+  16: "Elegant",
+  17: "Corporate",
+  18: "Ribbon",
+  19: "Classic",
+  20: "Monogram",
+  21: "Inline",
+  22: "Split",
+  23: "Footer strip",
+  24: "Centred minimal",
+  25: "Headline",
+  26: "Business card",
+}
 
 export type SignatureFields = {
   first: string
