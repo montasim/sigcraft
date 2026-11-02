@@ -103,6 +103,34 @@ const G = (x: number, y: number, w: number) =>
 const V = (x: number, y: number, h: number, className = "fill-primary/50") =>
   B(x, y, 0.8, h, className, 0)
 
+// A photo inside a ring in the theme colour.
+const O = (x: number, y: number, r: number) => (
+  <g key={`o${x}${y}`}>
+    <circle
+      className="fill-none stroke-primary/60"
+      cx={x}
+      cy={y}
+      r={r + 1.6}
+      strokeWidth={0.9}
+    />
+    {P(x, y, r)}
+  </g>
+)
+// A row of linked contact and social icons.
+const I = (x: number, y: number, n: number) => (
+  <g key={`i${x}${y}`}>
+    {Array.from({ length: n }, (_, i) => (
+      <circle
+        key={i}
+        className="fill-primary/60"
+        cx={x + i * 6.5}
+        cy={y}
+        r={2.4}
+      />
+    ))}
+  </g>
+)
+
 const THUMBS: Record<TemplateId, ReactNode[]> = {
   1: [P(16, 16), S(9, 34), N(34, 9), R(34, 21, 22), C(34, 26)],
   2: [P(40, 9, 7), N(27, 18), R(27, 29, 26), C(30, 32, 20, 2), S(33, 46)],
@@ -233,6 +261,95 @@ const THUMBS: Record<TemplateId, ReactNode[]> = {
       B(36, y, 26, 3),
     ]),
     S(31, 45),
+  ],
+  27: [
+    O(15, 25, 9),
+    B(30, 8, 2, 34, "fill-primary/70", 0),
+    B(36, 13, 30, 3, "fill-primary/60"),
+    B(36, 19, 22, 3),
+    I(37, 30, 5),
+  ],
+  28: [
+    O(40, 11, 7),
+    B(26, 22, 28, 3, "fill-primary/60"),
+    B(30, 28, 20, 3),
+    R(36, 34, 8),
+    I(26, 42, 5),
+  ],
+  29: [
+    O(11, 25, 6),
+    B(21, 19, 22, 3, "fill-primary/60"),
+    B(21, 25, 16, 3),
+    V(47, 15, 20, "fill-muted-foreground/30"),
+    I(52, 25, 4),
+  ],
+  30: [
+    B(4, 6, 72, 38, "fill-primary/10", 4),
+    O(17, 25, 7),
+    B(30, 15, 30, 3, "fill-primary/60"),
+    B(30, 21, 20, 3),
+    I(31, 33, 5),
+  ],
+  31: [
+    P(14, 23, 8),
+    B(28, 9, 44, 0.8, "fill-primary/60", 0),
+    B(28, 11, 44, 0.8, "fill-primary/60", 0),
+    B(28, 15, 30, 3, "fill-muted-foreground/45"),
+    B(28, 21, 20, 2.5),
+    B(28, 27, 44, 2.5),
+    B(28, 32, 44, 0.8, "fill-primary/60", 0),
+    B(28, 34, 44, 0.8, "fill-primary/60", 0),
+    S(29, 42),
+  ],
+  32: [
+    P(40, 10, 6),
+    B(24, 19, 32, 3.5, "fill-muted-foreground/40"),
+    B(30, 25, 20, 2.5),
+    B(34, 31, 12, 1.5, "fill-primary/60"),
+    B(14, 36, 52, 2.5),
+    S(33, 45),
+  ],
+  33: [
+    B(4, 4, 30, 42, "fill-primary/70", 3),
+    P(19, 17, 7),
+    B(9, 28, 20, 2.5, "fill-white/85"),
+    B(12, 33, 14, 2, "fill-white/60"),
+    B(34, 4, 42, 42, "fill-card stroke-border", 3),
+    C(40, 12, 28),
+    S(41, 36),
+  ],
+  34: [
+    B(4, 4, 72, 42, "fill-amber-50 stroke-primary/40", 2),
+    P(16, 17, 7),
+    B(28, 9, 30, 3, "fill-muted-foreground/40"),
+    G(28, 17, 40),
+    ...[21, 27, 33].flatMap((y) => [
+      B(28, y, 3, 3, "fill-primary/60"),
+      B(34, y, 24, 3),
+    ]),
+  ],
+  35: [
+    P(14, 22, 8),
+    B(28, 10, 40, 5, "fill-muted-foreground/35", 2.5),
+    R(28, 18, 12),
+    B(28, 24, 44, 2.5),
+    S(29, 34),
+  ],
+  36: [
+    B(4, 6, 72, 38, "fill-card stroke-primary/60", 4),
+    P(17, 25, 7),
+    B(30, 13, 28, 3, "fill-muted-foreground/45"),
+    B(30, 19, 18, 3, "fill-primary/60"),
+    C(30, 25, 26, 2),
+    S(31, 39),
+  ],
+  37: [
+    B(8, 9, 30, 3, "fill-muted-foreground/45"),
+    B(8, 15, 20, 3),
+    B(8, 23, 26, 2.5),
+    B(8, 28, 34, 2.5),
+    B(8, 33, 22, 2.5),
+    S(9, 42),
   ],
 }
 

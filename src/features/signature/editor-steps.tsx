@@ -1,4 +1,6 @@
+import { useState } from "react"
 import type { ComponentProps, Dispatch, SetStateAction } from "react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Field,
   FieldContent,
@@ -23,23 +25,34 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Icon, Image01Icon, Link01Icon, Tick02Icon } from "@/components/icons"
+import {
+  Icon,
+  Image01Icon,
+  InformationCircleIcon,
+  Link01Icon,
+  Tick02Icon,
+} from "@/components/icons"
 import type { IconGlyph } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import {
   FONTS,
   FONT_SIZES,
+  PHOTO_BORDER_WIDTHS,
   PHOTO_SIZES,
   SHAPES,
   SLOGAN_MAX_LENGTH,
   SLOGAN_POSITIONS,
   SLOGAN_STYLES,
   SOCIALS,
-  TEMPLATE_IDS,
+  TEMPLATES_BY_NAME,
+  TEMPLATE_PHOTO_NOTE,
+  TEMPLATE_STYLE,
+  TEMPLATE_STYLES,
   TEMPLATE_NAMES,
 } from "./config"
 import type {
   FontId,
+  PhotoBorderWidth,
   ShapeId,
   SignatureFields,
   SignatureState,
@@ -47,6 +60,7 @@ import type {
   SloganPosition,
   SloganStyle,
   TemplateId,
+  TemplateStyle,
 } from "./config"
 import {
   CustomIconsSection,
@@ -209,8 +223,18 @@ export function DetailsStep({ state, setState }: StepProps) {
 
 export function ImagesStep({ state, setState }: StepProps) {
   const set = useFieldSetter(setState)
+  const photoNote = TEMPLATE_PHOTO_NOTE[state.template]
   return (
     <div className="flex flex-col gap-6">
+      {photoNote ? (
+        <Alert>
+          <Icon icon={InformationCircleIcon} />
+          <AlertTitle>Your template has no photo</AlertTitle>
+          <AlertDescription>
+            {photoNote} Pick another template in Templates to show one.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       <FieldGroup>
         <Field orientation="horizontal">
           <FieldContent>
@@ -225,6 +249,45 @@ export function ImagesStep({ state, setState }: StepProps) {
             onCheckedChange={(v) => setState((s) => ({ ...s, showPhoto: v }))}
           />
         </Field>
+        <Field
+          orientation="horizontal"
+          data-disabled={!state.showPhoto || undefined}
+        >
+          <FieldContent>
+            <FieldLabel htmlFor="f-photoborder">Border around photo</FieldLabel>
+            <FieldDescription>A ring in your theme colour.</FieldDescription>
+          </FieldContent>
+          <Switch
+            id="f-photoborder"
+            checked={state.photoBorder}
+            disabled={!state.showPhoto}
+            onCheckedChange={(v) => setState((s) => ({ ...s, photoBorder: v }))}
+          />
+        </Field>
+        {state.showPhoto && state.photoBorder ? (
+          <Field>
+            <FieldLabel>Border width</FieldLabel>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              value={state.photoBorderWidth}
+              onValueChange={(v) =>
+                v &&
+                setState((s) => ({
+                  ...s,
+                  photoBorderWidth: v as PhotoBorderWidth,
+                }))
+              }
+              aria-label="Border width"
+            >
+              {Object.entries(PHOTO_BORDER_WIDTHS).map(([id, o]) => (
+                <ToggleGroupItem key={id} value={id} className="px-3">
+                  {o.name}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </Field>
+        ) : null}
         <TextField
           id="f-photo"
           label="Profile photo URL"
@@ -275,8 +338,33 @@ export function ImagesStep({ state, setState }: StepProps) {
 /* ---------- Step 3: templates ---------- */
 
 export function TemplatesStep({ state, setState }: StepProps) {
+  const [filter, setFilter] = useState<TemplateStyle | "all">("all")
+  const shown = TEMPLATES_BY_NAME.filter(
+    (id) => filter === "all" || TEMPLATE_STYLE[id] === filter
+  )
+  const count = (style: TemplateStyle) =>
+    TEMPLATES_BY_NAME.filter((id) => TEMPLATE_STYLE[id] === style).length
   return (
     <div className="flex flex-col gap-6">
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        size="sm"
+        spacing={2}
+        value={filter}
+        onValueChange={(v) => v && setFilter(v as TemplateStyle | "all")}
+        className="flex-wrap justify-start"
+        aria-label="Filter templates by style"
+      >
+        <ToggleGroupItem value="all" className="px-2.5">
+          All {TEMPLATES_BY_NAME.length}
+        </ToggleGroupItem>
+        {(Object.keys(TEMPLATE_STYLES) as TemplateStyle[]).map((style) => (
+          <ToggleGroupItem key={style} value={style} className="px-2.5">
+            {TEMPLATE_STYLES[style]} {count(style)}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
       <ToggleGroup
         type="single"
         spacing={3}
@@ -287,7 +375,7 @@ export function TemplatesStep({ state, setState }: StepProps) {
         className="grid w-full grid-cols-2"
         aria-label="Template"
       >
-        {TEMPLATE_IDS.map((id) => (
+        {shown.map((id) => (
           <ToggleGroupItem
             key={id}
             value={String(id)}

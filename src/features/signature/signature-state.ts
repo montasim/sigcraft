@@ -3,6 +3,7 @@ import {
   DEFAULT_STATE,
   FONTS,
   FONT_SIZES,
+  PHOTO_BORDER_WIDTHS,
   PHOTO_SIZES,
   SHAPES,
   SLOGAN_POSITIONS,
@@ -10,6 +11,7 @@ import {
   TEMPLATE_IDS,
 } from "./config"
 import type {
+  PhotoBorderWidth,
   SignatureFields,
   SignatureState,
   SloganPosition,
@@ -63,6 +65,15 @@ export function restoreState(saved: unknown): SignatureState {
     fields,
     showPhoto:
       typeof s.showPhoto === "boolean" ? s.showPhoto : DEFAULT_STATE.showPhoto,
+    photoBorder:
+      typeof s.photoBorder === "boolean"
+        ? s.photoBorder
+        : DEFAULT_STATE.photoBorder,
+    photoBorderWidth: pick(
+      s.photoBorderWidth,
+      Object.keys(PHOTO_BORDER_WIDTHS) as PhotoBorderWidth[],
+      DEFAULT_STATE.photoBorderWidth
+    ),
     showIcons:
       typeof s.showIcons === "boolean" ? s.showIcons : DEFAULT_STATE.showIcons,
     color: restoreColor(s.color),

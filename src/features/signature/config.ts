@@ -91,6 +91,13 @@ export const PHOTO_SIZES = {
   m: { name: "Medium", px: 96 },
   l: { name: "Large", px: 112 },
 } as const
+// Line width of the ring around the photo.
+export const PHOTO_BORDER_WIDTHS = {
+  thin: { name: "Thin", px: 1 },
+  regular: { name: "Regular", px: 2 },
+  bold: { name: "Bold", px: 3 },
+} as const
+export type PhotoBorderWidth = keyof typeof PHOTO_BORDER_WIDTHS
 export const FONT_SIZES = {
   s: { name: "Small", px: 12 },
   m: { name: "Medium", px: 13 },
@@ -100,7 +107,7 @@ export type SizeId = keyof typeof PHOTO_SIZES
 
 export const TEMPLATE_IDS = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-  23, 24, 25, 26,
+  23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
 ] as const
 export type TemplateId = (typeof TEMPLATE_IDS)[number]
 
@@ -133,7 +140,79 @@ export const TEMPLATE_NAMES: Record<TemplateId, string> = {
   24: "Centred minimal",
   25: "Headline",
   26: "Business card",
+  27: "Icon row",
+  28: "Centred icons",
+  29: "Icon strip",
+  30: "Icon card",
+  31: "Double rule",
+  32: "Letterpress",
+  33: "Spotlight",
+  34: "Postcard",
+  35: "Signature",
+  36: "Outline card",
+  37: "Plain",
 }
+
+// Style groups for the picker's filter, so the list stays easy to browse.
+export const TEMPLATE_STYLES = {
+  clean: "Clean",
+  minimal: "Minimal",
+  classic: "Classic",
+  bold: "Bold",
+  unique: "Unique",
+} as const
+export type TemplateStyle = keyof typeof TEMPLATE_STYLES
+
+export const TEMPLATE_STYLE: Record<TemplateId, TemplateStyle> = {
+  1: "clean",
+  2: "clean",
+  3: "clean",
+  4: "clean",
+  5: "clean",
+  6: "clean",
+  7: "clean",
+  8: "clean",
+  9: "clean",
+  10: "clean",
+  11: "minimal",
+  12: "clean",
+  13: "bold",
+  14: "bold",
+  15: "minimal",
+  16: "classic",
+  17: "classic",
+  18: "bold",
+  19: "classic",
+  20: "unique",
+  21: "minimal",
+  22: "bold",
+  23: "bold",
+  24: "minimal",
+  25: "bold",
+  26: "classic",
+  27: "unique",
+  28: "unique",
+  29: "minimal",
+  30: "bold",
+  31: "classic",
+  32: "classic",
+  33: "bold",
+  34: "unique",
+  35: "unique",
+  36: "clean",
+  37: "minimal",
+}
+
+// Templates that show no photo whatever the photo setting, and why.
+export const TEMPLATE_PHOTO_NOTE: Partial<Record<TemplateId, string>> = {
+  20: "Monogram shows your initials instead of a photo.",
+  37: "Plain is text only, so it shows no photo.",
+}
+
+// The picker lists templates by name, A to Z.
+export const TEMPLATES_BY_NAME: ReadonlyArray<TemplateId> = [
+  ...TEMPLATE_IDS,
+].sort((a, b) => TEMPLATE_NAMES[a].localeCompare(TEMPLATE_NAMES[b], "en"))
 
 export type SignatureFields = {
   first: string
@@ -160,6 +239,9 @@ export type SignatureFields = {
 export type SignatureState = {
   fields: SignatureFields
   showPhoto: boolean
+  /** A ring in the theme colour around the photo. */
+  photoBorder: boolean
+  photoBorderWidth: PhotoBorderWidth
   showIcons: boolean
   /** Theme colour as #rrggbb. */
   color: string
@@ -206,6 +288,8 @@ export const DEFAULT_STATE: SignatureState = {
       "Building software around predictable behavior and performance that holds up in production.",
   },
   showPhoto: true,
+  photoBorder: true,
+  photoBorderWidth: "thin",
   showIcons: true,
   color: COLORS.orange.hex,
   contactIconStyle: "soft",

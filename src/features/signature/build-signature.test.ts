@@ -116,6 +116,40 @@ describe("buildSignature", () => {
     expect(html).toMatch(/<a href="https:\/\/example\.co"[^>]*>Example Co<\/a>/)
   })
 
+  it("links every contact from the icon row, in one icon style", () => {
+    const html = buildSignature(
+      { ...fullState, template: 27, contactIconStyle: "soft" },
+      "copy"
+    )
+    expect(html).toContain('href="tel:+8801722815469"')
+    expect(html).toContain('href="mailto:montasimmamun@gmail.com"')
+    expect(html).toContain('href="https://montasim.dev"')
+    expect(html).toContain("/api/icon/v2/solid/ff4800/email.png")
+    expect(html).not.toContain("/soft/")
+  })
+
+  it("draws the photo border only when it's on, at the same overall size", () => {
+    const off = buildSignature({ ...DEFAULT_STATE, photoBorder: false }, "copy")
+    expect(off).not.toMatch(/px solid #ff4800;border-radius:50%/)
+    expect(off).toContain('width="96"')
+    // The 96px photo keeps its size: the image shrinks by the 3px gap plus
+    // the line width on each side.
+    for (const [width, line, image] of [
+      ["thin", 1, 88],
+      ["regular", 2, 86],
+      ["bold", 3, 84],
+    ] as const) {
+      const on = buildSignature(
+        { ...DEFAULT_STATE, photoBorder: true, photoBorderWidth: width },
+        "copy"
+      )
+      expect(on).toMatch(
+        new RegExp(`border:${line}px solid #ff4800;border-radius:50%`)
+      )
+      expect(on).toContain(`width="${image}"`)
+    }
+  })
+
   it("uses a custom icon URL instead of the drawn icon", () => {
     const html = buildSignature(
       {

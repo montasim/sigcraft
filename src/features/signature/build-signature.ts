@@ -4,6 +4,7 @@ import {
   DEFAULT_PHOTO_URL,
   FONTS,
   FONT_SIZES,
+  PHOTO_BORDER_WIDTHS,
   PHOTO_SIZES,
   SHAPES,
   SITE_URL,
@@ -29,6 +30,10 @@ export type BuildTarget = "preview" | "copy"
 const MUTED = "#6b7280"
 const RULE = "#e5e7eb"
 const PANEL = "#f6f7f9"
+// Paper tone for the Postcard template.
+const PAPER = "#fffaf0"
+// Email-safe serif, for the classic templates that set their own typeface.
+const SERIF = "Georgia,'Times New Roman',Times,serif"
 
 const esc = (s: string) =>
   s.replace(
@@ -65,6 +70,11 @@ const TB = (inner: string, attrs = "") => {
     keyof typeof ALIGN_MARGIN | undefined
   return `<table cellpadding="0" cellspacing="0" border="0"${attrs} style="border-collapse:collapse;${align ? ALIGN_MARGIN[align] : ""}">${inner}</table>`
 }
+// A table whose cell borders stay separate. Collapsed borders ignore
+// border-radius and draw square corners, so rounded, bordered panels use
+// this instead.
+const TBS = (inner: string) =>
+  `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">${inner}</table>`
 const TD = (inner: string, style = "", attrs = "") =>
   `<td${attrs} style="padding:0;vertical-align:top;${style}">${inner}</td>`
 const TR = (...cells: string[]) => `<tr>${cells.join("")}</tr>`
@@ -94,10 +104,18 @@ function createKit(s: SignatureState, target: BuildTarget) {
   const img = (src: string, w: number, r: string, alt: string) =>
     `<img src="${esc(src)}" width="${w}" height="${w}" alt="${esc(alt)}" style="display:block;width:${w}px;height:${w}px;border:0;border-radius:${r};">`
   // A custom icon URL wins; otherwise the icon is drawn in the chosen style.
-  const icon = (key: IconKey, size: number, alt: string) => {
+  // `uniform` draws contact icons in the social style too, for rows that mix
+  // both; brand colours, which only social icons have, fall back to solid.
+  const icon = (key: IconKey, size: number, alt: string, uniform = false) => {
     const custom = s.customIcons[key].trim()
     if (custom) return img(fullUrl(custom), size, "0", alt)
-    const style = isContactIcon(key) ? s.contactIconStyle : s.socialIconStyle
+    const style = !isContactIcon(key)
+      ? s.socialIconStyle
+      : uniform
+        ? s.socialIconStyle === "brand"
+          ? "solid"
+          : s.socialIconStyle
+        : s.contactIconStyle
     return img(
       origin + iconPath(style, theme, key),
       size,
@@ -108,8 +126,25 @@ function createKit(s: SignatureState, target: BuildTarget) {
   const a = (href: string, label: string) =>
     `<a href="${esc(href)}" target="_blank" style="color:${link};text-decoration:none;">${esc(label)}</a>`
 
-  const photo = (size: number = photoPx) =>
-    s.showPhoto ? img(photoSrc(), size, radius, name) : ""
+  // With the photo border on, the photo sits inside a ring in the theme
+  // colour (white on theme-coloured panels), at the chosen line width. The
+  // image shrinks by the ring's width, so the photo takes the same space
+  // either way and no layout moves. The ring is on a wrapper, not a table
+  // cell: collapsed table borders ignore border-radius.
+  const RING_GAP = 3
+  const photo = (size: number = photoPx, ringColor = theme) => {
+    if (!s.showPhoto) return ""
+    if (!s.photoBorder) return img(photoSrc(), size, radius, name)
+    const line = PHOTO_BORDER_WIDTHS[s.photoBorderWidth].px
+    const ring = RING_GAP + line // per side
+    const ringRadius =
+      radius === "50%"
+        ? "50%"
+        : radius === "0"
+          ? "0"
+          : `${parseInt(radius, 10) + ring}px`
+    return `<div style="display:inline-block;padding:${RING_GAP}px;border:${line}px solid ${ringColor};border-radius:${ringRadius};line-height:0;font-size:0;">${img(photoSrc(), size - ring * 2, radius, name)}</div>`
+  }
 
   // One short line in a muted (or theme) colour, so it reads as a sign-off
   // rather than competing with the name and title.
@@ -143,6 +178,10 @@ function createKit(s: SignatureState, target: BuildTarget) {
   // - "underline": a theme-coloured rule under the name only
   // - "headline": a large name over a small uppercase title in the theme colour
   // - "inline": name, title and organisation on one line
+  // - "brand": the name in the theme colour over a muted title
+  // - "smallcaps": a spaced-out capital name over an italic title
+  // - "serif": a book-face name and italic title, whatever the chosen font
+  // - "script": a large italic serif name, like a signed sign-off
   type NameStyle =
     | "default"
     | "dark"
@@ -152,6 +191,10 @@ function createKit(s: SignatureState, target: BuildTarget) {
     | "underline"
     | "headline"
     | "inline"
+    | "brand"
+    | "smallcaps"
+    | "serif"
+    | "script"
   const nameBlock = (
     align: "left" | "center" = "left",
     style: NameStyle = "default"
@@ -166,7 +209,12 @@ function createKit(s: SignatureState, target: BuildTarget) {
     // The role line's colour differs by style; a linked company name keeps
     // it rather than turning into a blue link.
     const roleColor =
-      style === "elegant" || style === "inline"
+      style === "elegant" ||
+      style === "inline" ||
+      style === "brand" ||
+      style === "smallcaps" ||
+      style === "serif" ||
+      style === "script"
         ? MUTED
         : style === "headline" || style === "accent"
           ? theme
@@ -206,12 +254,47 @@ function createKit(s: SignatureState, target: BuildTarget) {
       )
     }
 
+    // Name and title looks per style; anything not listed uses the default.
+    const NAME_CSS: Partial<Record<NameStyle, string>> = {
+      elegant: T(base + 7, ink, "font-weight:normal;letter-spacing:0.2px;"),
+      headline: T(base + 11, ink, "font-weight:bold;letter-spacing:-0.5px;"),
+      brand: T(base + 5, theme, "font-weight:bold;"),
+      smallcaps: T(
+        base + 1,
+        ink,
+        "font-weight:bold;text-transform:uppercase;letter-spacing:2.5px;"
+      ),
+      serif: T(base + 7, ink, `font-family:${SERIF};font-weight:normal;`),
+      script: T(
+        base + 12,
+        ink,
+        `font-family:${SERIF};font-style:italic;font-weight:normal;`
+      ),
+    }
+    const TITLE_CSS: Partial<Record<NameStyle, string>> = {
+      elegant: T(
+        base - 2,
+        MUTED,
+        "text-transform:uppercase;letter-spacing:1.5px;padding-top:2px;"
+      ),
+      headline: T(
+        base - 2,
+        theme,
+        "font-weight:bold;text-transform:uppercase;letter-spacing:1.2px;"
+      ),
+      accent: T(base, theme, "font-weight:bold;"),
+      brand: T(base, MUTED),
+      underline: T(base, ink, "padding-top:6px;"),
+      smallcaps: T(base, MUTED, "font-style:italic;padding-top:2px;"),
+      serif: T(base, MUTED, `font-family:${SERIF};font-style:italic;`),
+      script: T(
+        base - 2,
+        MUTED,
+        "text-transform:uppercase;letter-spacing:1.5px;padding-top:2px;"
+      ),
+    }
     const nameCss =
-      style === "elegant"
-        ? T(base + 7, ink, "font-weight:normal;letter-spacing:0.2px;" + ta)
-        : style === "headline"
-          ? T(base + 11, ink, "font-weight:bold;letter-spacing:-0.5px;" + ta)
-          : T(base + 5, ink, "font-weight:bold;" + ta)
+      (NAME_CSS[style] ?? T(base + 5, ink, "font-weight:bold;")) + ta
     const nameHtml =
       style === "underline"
         ? TB(
@@ -224,26 +307,7 @@ function createKit(s: SignatureState, target: BuildTarget) {
             align === "center" ? ' align="center"' : ""
           )
         : `<div style="${nameCss}">${esc(name)}</div>`
-    const titleCss =
-      style === "elegant"
-        ? T(
-            base - 2,
-            MUTED,
-            "text-transform:uppercase;letter-spacing:1.5px;padding-top:2px;" +
-              ta
-          )
-        : style === "headline"
-          ? T(
-              base - 2,
-              theme,
-              "font-weight:bold;text-transform:uppercase;letter-spacing:1.2px;" +
-                ta
-            )
-          : style === "accent"
-            ? T(base, theme, "font-weight:bold;" + ta)
-            : style === "underline"
-              ? T(base, ink, "padding-top:6px;" + ta)
-              : T(base, ink, ta)
+    const titleCss = (TITLE_CSS[style] ?? T(base, ink)) + ta
     const title = !f.title
       ? ""
       : style === "pill"
@@ -314,6 +378,48 @@ function createKit(s: SignatureState, target: BuildTarget) {
       )
     )
     return TB(TR(...cells), align === "left" ? "" : ` align="${align}"`)
+  }
+
+  // Every way to reach you as one row of linked icons: phone, email and
+  // website first, then the social profiles. The address has no link, so it
+  // stays out. Used by the compact icon-row templates in place of the
+  // contact list, so it shows even when contact icons are turned off.
+  const iconLinks = (align: "left" | "center" = "left") => {
+    const phone = f.mobile || f.office
+    const list: Array<{ key: IconKey; href: string; alt: string }> = [
+      ...(phone
+        ? [
+            {
+              key: (f.mobile ? "mobile" : "phone") as IconKey,
+              href: tel(phone),
+              alt: phone,
+            },
+          ]
+        : []),
+      ...(f.email
+        ? [{ key: "email" as IconKey, href: "mailto:" + f.email, alt: f.email }]
+        : []),
+      ...(f.web
+        ? [{ key: "web" as IconKey, href: fullUrl(f.web), alt: bareUrl(f.web) }]
+        : []),
+      ...SOCIALS.filter((so) => f[so.key]).map((so) => ({
+        key: so.key,
+        href: fullUrl(f[so.key]),
+        alt: so.label,
+      })),
+    ]
+    if (!list.length) return ""
+    return TB(
+      TR(
+        ...list.map((it, i) =>
+          TD(
+            `<a href="${esc(it.href)}" target="_blank" style="text-decoration:none;">${icon(it.key, 24, it.alt, true)}</a>`,
+            `padding:0 ${i < list.length - 1 ? 8 : 0}px 0 0;vertical-align:middle;`
+          )
+        )
+      ),
+      align === "center" ? ' align="center"' : ""
+    )
   }
 
   const cta = (align: "left" | "center" | "right" = "left") => {
@@ -450,6 +556,28 @@ function createKit(s: SignatureState, target: BuildTarget) {
     return `<div style="${T(base - 1, text, `text-align:${align};`)}">${list.map((it) => it.html).join(dot)}</div>`
   }
 
+  // A small centred flourish for the Letterpress template.
+  const ornament = () =>
+    `<div style="${T(base, theme, "text-align:center;letter-spacing:6px;")}">&mdash;&#10022;&mdash;</div>`
+
+  // Contacts as plain text lines with no icons, like a typed signature.
+  const contactsLines = () =>
+    contactItems()
+      .map((it) => `<div style="${T(base, text)}">${it.html}</div>`)
+      .join("")
+
+  // A bordered, rounded box, optionally filled.
+  const box = (inner: string, style: string, bg?: string) =>
+    TBS(
+      TR(
+        TD(
+          inner,
+          (bg ? `background-color:${bg};` : "") + style,
+          bg ? ` bgcolor="${bg}"` : ""
+        )
+      )
+    )
+
   // Contacts with a short text label in the theme colour instead of an icon,
   // like a printed business card.
   const LABELS: Record<ContactIconKey, string> = {
@@ -498,6 +626,10 @@ function createKit(s: SignatureState, target: BuildTarget) {
     contactsInline,
     contactsText,
     contactsLabeled,
+    iconLinks,
+    contactsLines,
+    box,
+    ornament,
     slogan,
     contacts,
     socials,
@@ -740,7 +872,7 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
     TB(
       TR(
         TD(
-          k.row(14, k.photo(64), k.nameBlock("left", "dark")),
+          k.row(14, k.photo(64, "#ffffff"), k.nameBlock("left", "dark")),
           `background-color:${k.theme};border-radius:8px 8px 0 0;padding:16px 20px;`,
           ` bgcolor="${k.theme}"`
         )
@@ -761,38 +893,30 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
   // Card: a soft bordered card, the title as a filled label, and the contact
   // list on its own white inset.
   14: (k) =>
-    TB(
-      TR(
-        TD(
-          TB(
-            TR(
-              k.s.showPhoto
-                ? TD(k.photo(72), "padding-right:18px;vertical-align:top;")
+    k.box(
+      TB(
+        TR(
+          k.s.showPhoto
+            ? TD(k.photo(72), "padding-right:18px;vertical-align:top;")
+            : "",
+          TD(
+            k.stack(
+              12,
+              k.nameBlock("left", "pill"),
+              k.contacts()
+                ? k.box(
+                    k.contacts(),
+                    `border:1px solid ${RULE};border-radius:8px;padding:10px 12px;`,
+                    "#ffffff"
+                  )
                 : "",
-              TD(
-                k.stack(
-                  12,
-                  k.nameBlock("left", "pill"),
-                  k.contacts()
-                    ? TB(
-                        TR(
-                          TD(
-                            k.contacts(),
-                            `background-color:#ffffff;border:1px solid ${RULE};border-radius:8px;padding:10px 12px;`,
-                            ' bgcolor="#ffffff"'
-                          )
-                        )
-                      )
-                    : "",
-                  k.row(16, k.socials(), k.cta())
-                )
-              )
+              k.row(16, k.socials(), k.cta())
             )
-          ),
-          `background-color:${PANEL};border:1px solid ${RULE};border-radius:12px;padding:18px;`,
-          ` bgcolor="${PANEL}"`
+          )
         )
-      )
+      ),
+      `border:1px solid ${RULE};border-radius:12px;padding:18px;`,
+      PANEL
     ),
   // Minimal: one line for who you are, one for how to reach you.
   15: (k) =>
@@ -898,7 +1022,7 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
   // Split: a tinted side panel with the photo (or initials) and social
   // icons, details in a bordered panel beside it.
   22: (k) =>
-    TB(
+    TBS(
       TR(
         TD(
           k.stack(
@@ -1003,10 +1127,221 @@ const LAYOUTS: Record<TemplateId, (k: Kit) => string> = {
         )
       )
     ),
+  // Icon row: a ringed photo, a bar in the theme colour, the name in the
+  // theme colour and every contact as one row of linked icons.
+  27: (k) =>
+    TB(
+      TR(
+        k.s.showPhoto
+          ? TD(k.photo(), "padding-right:20px;vertical-align:middle;")
+          : "",
+        TD(
+          k.stack(
+            10,
+            k.nameBlock("left", "brand"),
+            k.row(16, k.iconLinks(), k.cta())
+          ),
+          `padding-left:20px;border-left:3px solid ${k.theme};vertical-align:middle;`
+        )
+      )
+    ),
+  // Centred icons: the same pieces on one centre line.
+  28: (k) =>
+    TB(
+      (k.s.showPhoto ? TR(TD(k.centered(k.photo(80)))) : "") +
+        TR(
+          TD(
+            k.nameBlock("center", "brand"),
+            k.s.showPhoto ? "padding-top:10px;" : "",
+            ' align="center"'
+          )
+        ) +
+        TR(TD(k.centered(k.hr(28, k.theme, 2)), "padding-top:10px;")) +
+        TR(
+          TD(
+            k.stack(10, k.iconLinks("center"), k.cta("center")),
+            "padding-top:12px;",
+            ' align="center"'
+          )
+        )
+    ),
+  // Icon strip: one short line, the name block and icons side by side.
+  29: (k) =>
+    TB(
+      TR(
+        k.s.showPhoto
+          ? TD(k.photo(56), "padding-right:14px;vertical-align:middle;")
+          : "",
+        TD(
+          k.nameBlock("left", "brand"),
+          "padding-right:18px;vertical-align:middle;"
+        ),
+        TD(
+          k.row(16, k.iconLinks(), k.cta()),
+          `padding-left:18px;border-left:1px solid ${RULE};vertical-align:middle;`
+        )
+      )
+    ),
+  // Icon card: the icon-row layout on a soft tinted card.
+  30: (k) =>
+    TB(
+      TR(
+        TD(
+          TB(
+            TR(
+              k.s.showPhoto
+                ? TD(k.photo(72), "padding-right:16px;vertical-align:middle;")
+                : "",
+              TD(
+                k.stack(
+                  10,
+                  k.nameBlock("left", "brand"),
+                  k.row(16, k.iconLinks(), k.cta())
+                ),
+                "vertical-align:middle;"
+              )
+            )
+          ),
+          `background-color:${k.tint(0.93)};border-radius:12px;padding:16px 20px;`,
+          ` bgcolor="${k.tint(0.93)}"`
+        )
+      )
+    ),
+  // Double rule: an old-style block between two double rules, the name in
+  // spaced-out capitals and the contacts on one line.
+  31: (k) =>
+    TB(
+      TR(
+        k.photoCell("padding-right:20px;vertical-align:middle;"),
+        TD(
+          TB(
+            TR(
+              TD(
+                k.stack(10, k.nameBlock("left", "smallcaps"), k.contactsText()),
+                `padding:12px 0;border-top:3px double ${k.theme};border-bottom:3px double ${k.theme};`
+              )
+            ) +
+              (k.socials() || k.cta()
+                ? TR(TD(k.row(16, k.socials(), k.cta()), "padding-top:12px;"))
+                : "")
+          ),
+          "vertical-align:middle;"
+        )
+      )
+    ),
+  // Letterpress: centred and set in a serif, with a small ornament.
+  32: (k) =>
+    TB(
+      (k.s.showPhoto ? TR(TD(k.centered(k.photo(72)))) : "") +
+        TR(
+          TD(
+            k.nameBlock("center", "serif"),
+            k.s.showPhoto ? "padding-top:10px;" : "",
+            ' align="center"'
+          )
+        ) +
+        TR(TD(k.ornament(), "padding-top:6px;", ' align="center"')) +
+        TR(
+          TD(k.contactsText("center"), "padding-top:6px;", ' align="center"')
+        ) +
+        (k.socials() || k.cta()
+          ? TR(
+              TD(
+                k.stack(10, k.socials("center"), k.cta("center")),
+                "padding-top:12px;",
+                ' align="center"'
+              )
+            )
+          : "")
+    ),
+  // Spotlight: photo and name in white on a theme-coloured panel, details
+  // in a bordered panel beside it.
+  33: (k) =>
+    TBS(
+      TR(
+        TD(
+          k.stack(
+            12,
+            k.centered(k.photo(80, "#ffffff")),
+            k.nameBlock("center", "dark")
+          ),
+          `background-color:${k.theme};border-radius:12px 0 0 12px;padding:20px;vertical-align:middle;`,
+          ` bgcolor="${k.theme}" align="center"`
+        ),
+        TD(
+          k.stack(
+            12,
+            k.s.sloganPosition === "name" ? k.slogan("left", 300) : "",
+            k.contacts(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          `border:1px solid ${RULE};border-left:0;border-radius:0 12px 12px 0;padding:18px 20px;vertical-align:middle;`
+        )
+      )
+    ),
+  // Postcard: a dashed border on paper, with lettered contacts.
+  34: (k) =>
+    k.box(
+      TB(
+        TR(
+          k.photoCell("padding-right:18px;vertical-align:top;"),
+          TD(
+            k.stack(
+              10,
+              k.nameBlock("left", "serif"),
+              k.hr("fill", k.tint(0.6)),
+              k.contactsLabeled(),
+              k.row(16, k.socials(), k.cta())
+            )
+          )
+        )
+      ),
+      `border:2px dashed ${k.tint(0.45)};border-radius:8px;padding:16px 20px;`,
+      PAPER
+    ),
+  // Signature: a large italic name, as if signed, over a short role line.
+  35: (k) =>
+    TB(
+      TR(
+        k.photoCell("padding-right:20px;vertical-align:middle;"),
+        TD(
+          k.stack(
+            10,
+            k.stack(4, k.nameBlock("left", "script"), k.hr(56, k.theme, 2)),
+            k.contactsText(),
+            k.row(16, k.socials(), k.cta())
+          ),
+          "vertical-align:middle;"
+        )
+      )
+    ),
+  // Outline card: a white card with a thin border in the theme colour.
+  36: (k) =>
+    k.box(
+      TB(
+        TR(
+          k.photoCell("padding-right:18px;vertical-align:middle;"),
+          TD(
+            k.stack(
+              10,
+              k.nameBlock("left", "accent"),
+              k.contacts(),
+              k.row(16, k.socials(), k.cta())
+            ),
+            "vertical-align:middle;"
+          )
+        )
+      ),
+      `border:1px solid ${k.theme};border-radius:12px;padding:16px 20px;`,
+      "#ffffff"
+    ),
+  // Plain: text only, line by line, like a signature typed by hand. No
+  // photo, so it reads the same in any mail app.
+  37: (k) => k.stack(10, k.nameBlock(), k.contactsLines(), k.socials()),
 }
 
 // Layouts arranged on one centre line; a footer slogan stays centred too.
-const CENTERED: ReadonlySet<TemplateId> = new Set<TemplateId>([2, 24])
+const CENTERED: ReadonlySet<TemplateId> = new Set<TemplateId>([2, 24, 28, 32])
 
 export function buildSignature(state: SignatureState, target: BuildTarget) {
   const k = createKit(state, target)

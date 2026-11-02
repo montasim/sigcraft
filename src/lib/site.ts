@@ -5,7 +5,7 @@ export const site = {
   name: "Sigcraft",
   url: SITE_URL,
   description:
-    "Build a Gmail-ready email signature from 26 templates in any colour, then copy professional email templates for job search, clients and meetings.",
+    "Build a Gmail-ready email signature from 37 templates in any colour, then copy professional email templates for job search, clients and meetings.",
   ogImage: {
     // Versioned filename: change it when the image changes so crawlers refetch.
     url: `${SITE_URL}/og/sigcraft-og-v1.png`,
