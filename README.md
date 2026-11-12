@@ -4,6 +4,10 @@ Sigcraft builds a professional, Gmail-ready email signature and gives you ready-
 
 It's for anyone who wants a clean signature without hand-writing email HTML, especially people sending job applications, recruiter replies and client emails.
 
+[![Watch the one-minute Sigcraft demo on YouTube](https://img.youtube.com/vi/ufB-uC1MPzE/maxresdefault.jpg)](https://youtu.be/ufB-uC1MPzE)
+
+[Watch the one-minute demo on YouTube](https://youtu.be/ufB-uC1MPzE): live preview, the 37 templates, colours and fonts, copying to Gmail and the email templates.
+
 > **Status:** pre-release (`0.1.0`), not yet deployed. Copied signatures load their icons and photo from `https://sigcraft.netlify.app`, so they show images only once the site is live there (or at the address set in [`VITE_SITE_URL`](#configuration)).
 
 ## What you can do
